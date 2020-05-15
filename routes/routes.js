@@ -1,0 +1,154 @@
+const path = require('path')
+const multer  = require("multer");
+const db = require('../db')
+//const passport = require('passport')
+const fs = require('fs')
+const mime = require('mime');
+const auth = require('./auth')
+const equip = require('./equipment')
+const metrology = require('./metrology')
+const repair = require('./repair')
+const dictionary = require('./dictionary')
+const config = require('../config')
+
+
+const __staticFolder =  config.__staticFolder;
+const __pathToImage = config.__pathToImage;
+const __pathToDoc =   config.__pathToDoc;
+
+
+
+const storageDocConfig = multer.diskStorage({
+     destination: (req, file, cb) =>{
+         cb(null, '.' + __pathToDoc);
+     },
+     filename: (req, file, cb) =>{
+		let extension = path.extname(file.originalname);
+		cb(null, file.fieldname + '-' + Date.now() +extension)
+     }
+});
+
+
+const fileFilter = (req, file, cb) => {
+	cb(null, true);
+}
+const imageFilter = (req, file, cb) => {
+  
+    if(file.mimetype === "image/png" || 
+    file.mimetype === "image/jpg"|| 
+    file.mimetype === "image/jpeg"){
+        cb(null, true);
+    }
+    else{
+        cb(null, false);
+    }
+ }
+
+const upload = multer({dest:"uploads"});
+const uploadImage = multer({dest:'.' +__pathToImage, fileFilter: imageFilter});
+const uploadDocument = multer({ storage: storageDocConfig, fileFilter: fileFilter});
+
+const router = app => {
+
+
+	app.post('/auth', auth.authenticateUser);
+	app.get('/password/:pswd', auth.getHashedPswd);//временно для генерации hash 
+	
+	//#region СПРАВОЧНИКИ
+	app.get('/dictionary', dictionary.getDict)
+	//#endregion СПРАВОЧНИКИ
+	  
+
+	//#region КАРТОЧКА ОБОРУДОВАНИЯ
+	app.get('/equipment', equip.equipments)
+	app.post ('/equipment', equip.insEquipment);
+	app.put('/equipment/:idEq', equip.updEquipment);
+	app.delete('/equipment/:idEq', equip.delEquipment);
+	app.get('/equipment/docList/:idEq', equip.getDocList);
+	app.get('/equipment/imgList/:idEq', equip.getImageList);
+	app.get('/equipment/locList/:idEq', equip.getLocList);
+	//#endregion КАРТОЧКА ОБОРУДОВАНИЯ
+
+	//#region  РЕМОНТЫ
+	app.get ('/repair', repair.repairs);
+	app.post ('/repair', repair.insRepair);
+	app.put('/repair/:idRep', repair.updRepair);
+	app.delete('/repair/:idRep', repair.delRepair)
+	//#endregion РЕМОНТЫ
+
+	
+	//#region ДОКУМЕНТЫ И ФОТО
+	app.post ('/image', uploadImage.single("file"), (request, response) => {
+
+		let file = request.file;
+		if(!file)
+			response.send("Ошибка при загрузке файла");
+		else
+			equip.addImage(request, response)
+	});
+
+	app.delete ('/image', (request, response) => {
+		var fileName = request.body.fileName;
+	 	var pathToFile = process.cwd() + __staticFolder;
+	 	fs.unlink(pathToFile + fileName, (err) => {
+			if (err) {
+				response.sendStatus(204)
+				//next(err);
+			}
+			else 
+				equip.delImage(request, response)
+		});
+	});
+
+	app.post ('/file', uploadDocument.single("file"), (request, response, next) => {
+		let file = request.file;
+		let funShortName = request.query.funShortName;
+		 if(!file)
+		 	response.send("Ошибка при загрузке файла");
+		else {
+		 	switch(funShortName){
+		 		case 'eq':
+		 			equip.addDoc(request, response, next);
+					break;
+		 		case 'met':
+		 			metrology.addDoc(request, response, next);
+		 			break;
+		 		case 'rep':
+		 			repair.addDoc(request, response, next)
+		 			break;
+		 	}
+		 }
+	});
+	
+	app.delete('/file', (request, response, next) => {
+	 	var fileName = request.body.fileName;
+	 	var pathToFile = process.cwd() + __staticFolder;
+		var funShortName = request.body.funShortName;
+
+	 	fs.unlink(pathToFile + fileName, (err) => {
+			if (err) {
+					response.sendStatus(204);
+					//next(err);
+			}
+			else {
+				switch (funShortName){
+					case 'eq':
+						equip.delDoc(request, response, next);
+						break;
+					case 'met':
+						metrology.delDoc(request, response, next);
+						break;
+					case 'rep':
+						repair.delDoc(request, response, next)
+						break;
+				}
+			}	
+	 	});
+	 });
+	
+	//#endregion ДОКУМЕНТЫ И ФОТО
+
+}
+
+
+module.exports = router;
