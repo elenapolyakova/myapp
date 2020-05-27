@@ -8,6 +8,8 @@ const auth = require('./auth')
 const equip = require('./equipment')
 const metrology = require('./metrology')
 const repair = require('./repair')
+const query = require('./query')
+const contract = require('./contract')
 const dictionary = require('./dictionary')
 const config = require('../config')
 
@@ -57,7 +59,7 @@ const router = app => {
 	//#region СПРАВОЧНИКИ
 	app.get('/dictionary', dictionary.getDict)
 	//#endregion СПРАВОЧНИКИ
-	  
+
 
 	//#region КАРТОЧКА ОБОРУДОВАНИЯ
 	app.get('/equipment', equip.equipments)
@@ -75,6 +77,23 @@ const router = app => {
 	app.put('/repair/:idRep', repair.updRepair);
 	app.delete('/repair/:idRep', repair.delRepair)
 	//#endregion РЕМОНТЫ
+
+	
+	//#region  ЗАЯВКИ
+	app.get ('/queryList', query.queryList); //для табличного представления
+	app.get ('/query', query.queries); //для календаря за месяц
+	app.get ('/queryDate', query.queriesDate); //даты заявок 
+	app.post ('/query', query.insQuery);
+	app.put('/query/:idQuery', query.updQuery);
+	app.delete('/query/:idQuery', query.delQuery)
+	//#endregion ЗАЯВКИ
+
+	//#region  ДОГОВОРА
+	app.get ('/contract', contract.contracts);
+	app.post ('/contract', contract.insContract);
+	app.put('/contract/:idContract', contract.updContract);
+	app.delete('/contract/:idContract', contract.delContract)
+	//#endregion ДОГОВОРА
 
 	
 	//#region ДОКУМЕНТЫ И ФОТО
