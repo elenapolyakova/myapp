@@ -6,7 +6,7 @@ const queryList = function(request, response, next){
         TRIM(c.con_num) AS con_num, c.con_date, 
         TRIM(u.us_surname) as us_surname, TRIM(u.us_name) as us_name, TRIM(u.us_patname) as us_patname
      FROM eqQuery q
-        LEFT JOIN Equipment eq ON eq.Id_Eq = q.id_eq_equipment
+        INNER JOIN Equipment eq ON eq.Id_Eq = q.id_eq_equipment
         LEFT JOIN Contract c ON c.id_Cont = q.id_cont_contract 
         LEFT JOIN Users u ON u.id_user = q.id_user_users`, [], function(err, result){
           if (err){
@@ -19,8 +19,9 @@ const queryList = function(request, response, next){
 
 const queries = function(request, response, next){
     let queryData = request.query;
-         db.query(`SELECT q.* 
+         db.query(`SELECT q.*
             FROM eqQuery q
+            INNER JOIN Equipment eq ON eq.Id_Eq = q.id_eq_equipment
             WHERE id_eq_equipment = $1::INT AND 
             date_start <= $2::TIMESTAMP AND date_end >= $3::TIMESTAMP`, [queryData.idEq !== '' ? queryData.idEq : 0,
                 queryData.dateTo !== '' ? new Date(queryData.dateTo) : null,

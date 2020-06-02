@@ -101,14 +101,14 @@ const delEquipment = async function(request, response, next){
     let docList = await db.query(`SELECT TRIM(docbodypath) AS docbodypath FROM Docs WHERE id_eq_equipment = $1::INT`, [idEq !== '' ? idEq : 0]);
     docList.rows.forEach(item => {
            fs.unlink(pathToDoc + item.docbodypath, (err) => {
-            if (err) { next(err); }
+            if (err) {/*return next(err); */}
           })
     });
       //удаляем фотографии с сервера
     let photoList = await db.query(`SELECT TRIM(photopath) AS photopath FROM photo WHERE id_eq_equipment = $1::INT`, [idEq !== '' ? idEq : 0]);
     photoList.rows.forEach(item => {
             fs.unlink(pathToImage + item.photopath, (err) => {
-              if (err) { next(err); }
+              if (err) {/*return next(err); */ }
             })
     });
     //удаляем оборудование
@@ -236,6 +236,20 @@ const delImage = function(request, response, next){
         response.sendStatus(200);   
       });
 }
+
+const equipmentWorkingMode =  function(request, response, next){
+  let idEq = request.params.idEq;
+
+   db.query(`SELECT 1 as workingMode FROM equipment WHERE id_eq = $1:: INT`, [idEq !== '' ? idEq : 0], function(err, result){
+       if (err){
+         return next(err)
+       }
+       
+       let workingMode = result.rows[0].workingmode;
+       response.status(200).send({workingMode: workingMode})
+     });
+
+}
     
 
-module.exports = {equipments, insEquipment, updEquipment, delEquipment, addDoc, delDoc, addImage, delImage, getDocList, getImageList, getLocList }
+module.exports = {equipments, insEquipment, updEquipment, delEquipment, addDoc, delDoc, addImage, delImage, getDocList, getImageList, getLocList, equipmentWorkingMode }

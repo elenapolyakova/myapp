@@ -26,10 +26,50 @@ const insContract = function(request, response, next){
     })
 }
 const updContract = function(request, response, next){
-    response.sendStatus(200); 
-}
-const delContract = function(request, response, next){
-    response.sendStatus(200); 
+  let idContract = request.params.idContract;
+  let contractData = request.body.contractData;
+  db.query(`UPDATE Contract 
+    SET con_num = $1::VARCHAR(255), 
+    con_date = $2::DATE, 
+    con_purpose = $3::VARCHAR(255)
+    WHERE id_cont = $4:: INT`, [contractData.Num,
+      contractData.Date !== '' ? new Date(contractData.Date) : null, 
+      contractData.Purpose,
+      idContract !== '' ? idContract : 0], function(err, result){
+      if (err){
+        return next(err)
+    }
+
+    response.status(200).send(`Обновлён договор: ${idContract}`);
+  })
 }
 
-module.exports = {contracts, insContract, updContract, delContract}
+const uniteContract = async function(request, response, next){
+  let idParentContract = request.params.idParentContract;
+  let idContract = request.params.idContract;
+
+  try {
+  let result = await db.query(`UPDATE eqQuery 
+    SET id_cont_contract = $1::INT
+    WHERE id_cont_contract = $2:: INT`, [
+      idParentContract !== '' ? idParentContract : 0,
+      idContract !== '' ? idContract : 0])
+    
+  result = await db.query(`DELETE FROM Contract WHERE id_cont = $1:: INT`, [idContract !== '' ? idContract : 0])
+
+    response.status(200).send(`Объединены договора: ${idParentContract} и ${idContract}`);
+  }
+  catch (err) {return next(err)}
+}
+
+const delContract = function(request, response, next){
+  let idContract = request.params.idContract;
+  db.query(`DELETE FROM Contract WHERE id_cont = $1:: INT`, [idContract !== '' ? idContract : 0], function(err, result){
+        if (err){
+          return next(err)
+        }
+      response.status(200).send(`Удалён договор: ${idContract}`);
+  })
+}
+
+module.exports = {contracts, insContract, updContract, uniteContract, delContract}

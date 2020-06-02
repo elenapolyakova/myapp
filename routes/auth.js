@@ -16,7 +16,7 @@ const authenticateUser = function(request, response){
     }
     let username = request.body.username;
     let password = request.body.password;
-    let maxFunId = 5;
+    let maxFunId = 100;
      db.query(`SELECT u.id_user, TRIM(u.us_pswd) AS us_pswd, TRIM(r.rl_rights) AS rl_rights  FROM Users u 
             INNER JOIN Role_Users ru ON u.id_user = ru.id_user
             INNER JOIN Role r on r.id_role = ru.id_role

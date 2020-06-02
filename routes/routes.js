@@ -10,6 +10,7 @@ const metrology = require('./metrology')
 const repair = require('./repair')
 const query = require('./query')
 const contract = require('./contract')
+const user = require('./user')
 const dictionary = require('./dictionary')
 const config = require('../config')
 
@@ -69,10 +70,12 @@ const router = app => {
 	app.get('/equipment/docList/:idEq', equip.getDocList);
 	app.get('/equipment/imgList/:idEq', equip.getImageList);
 	app.get('/equipment/locList/:idEq', equip.getLocList);
+	app.get('/equipment/workingMode/:idEq', equip.equipmentWorkingMode)
+	
 	//#endregion КАРТОЧКА ОБОРУДОВАНИЯ
 
 	//#region  РЕМОНТЫ
-	app.get ('/repair', repair.repairs);
+	app.get ('/repair/:idEq', repair.repairs);
 	app.post ('/repair', repair.insRepair);
 	app.put('/repair/:idRep', repair.updRepair);
 	app.delete('/repair/:idRep', repair.delRepair)
@@ -92,9 +95,25 @@ const router = app => {
 	app.get ('/contract', contract.contracts);
 	app.post ('/contract', contract.insContract);
 	app.put('/contract/:idContract', contract.updContract);
+	app.post('/contractUnite/:idParentContract&:idContract', contract.uniteContract);
 	app.delete('/contract/:idContract', contract.delContract)
 	//#endregion ДОГОВОРА
 
+	//#region  МЕТРОЛОГИЯ
+	app.get ('/metrology/:idEq', metrology.metrologies);
+	app.post ('/metrology', metrology.insMetrology);
+	app.put('/metrology/:idMet', metrology.updMetrology);
+	app.delete('/metrology/:idMet', metrology.delMetrology)
+	//#endregion МЕТРОЛОГИЯ
+
+	//#region  АДМИНИСТРИРОВАНИЕ ПОЛЬЗОВАТЕЛЕЙ
+	app.get ('/user', user.users);
+	app.post ('/user', user.insUser);
+	app.put('/user/:idUser', user.updUser);
+	app.delete('/user/:idUser', user.delUser)
+	//#endregion АДМИНИСТРИРОВАНИЕ ПОЛЬЗОВАТЕЛЕЙ
+
+	
 	
 	//#region ДОКУМЕНТЫ И ФОТО
 	app.post ('/image', uploadImage.single("file"), (request, response) => {
@@ -160,13 +179,32 @@ const router = app => {
 					case 'rep':
 						repair.delDoc(request, response, next)
 						break;
-				}
+				}  
 			}	
 	 	});
 	 });
 	
 	//#endregion ДОКУМЕНТЫ И ФОТО
-
+	app.get('/u', function(request, response, next) {
+	
+		db.query('SELECT * FROM role;', [], function(err, result){
+			  
+			if (err){
+				return next(err)
+			}
+			response.json(result.rows)  
+		})
+	})
+	app.get('/ri', function(request, response, next) {
+	
+		db.query(`update role set rl_rights = 'FFFFFFF' WHERE id_role = 1`, [], function(err, result){
+			  
+			if (err){
+				return next(err)
+			}
+			response.json(result.rows)  
+		})
+	})
 }
 
 
