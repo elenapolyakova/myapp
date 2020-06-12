@@ -12,7 +12,10 @@ const query = require('./query')
 const contract = require('./contract')
 const user = require('./user')
 const dictionary = require('./dictionary')
+const report = require('./report')
 const config = require('../config')
+//const base64ToPNG = require('../js/base64-to-png')
+
 
 
 const __staticFolder =  config.__staticFolder;
@@ -71,6 +74,7 @@ const router = app => {
 	app.get('/equipment/imgList/:idEq', equip.getImageList);
 	app.get('/equipment/locList/:idEq', equip.getLocList);
 	app.get('/equipment/workingMode/:idEq', equip.equipmentWorkingMode)
+	app.post('/equipmentDoc', equip.insDoc)
 	
 	//#endregion КАРТОЧКА ОБОРУДОВАНИЯ
 
@@ -113,6 +117,12 @@ const router = app => {
 	app.delete('/user/:idUser', user.delUser)
 	//#endregion АДМИНИСТРИРОВАНИЕ ПОЛЬЗОВАТЕЛЕЙ
 
+
+	//#region ОТЧЁТЫ
+
+
+	
+	//#endregion ОТЧЁТЫ
 	
 	
 	//#region ДОКУМЕНТЫ И ФОТО
@@ -162,49 +172,31 @@ const router = app => {
 	 	var fileName = request.body.fileName;
 	 	var pathToFile = process.cwd() + __staticFolder;
 		var funShortName = request.body.funShortName;
-
-	 	fs.unlink(pathToFile + fileName, (err) => {
-			if (err) {
-					response.sendStatus(204);
-					//next(err);
-			}
-			else {
-				switch (funShortName){
-					case 'eq':
-						equip.delDoc(request, response, next);
-						break;
-					case 'met':
-						metrology.delDoc(request, response, next);
-						break;
-					case 'rep':
-						repair.delDoc(request, response, next)
-						break;
-				}  
-			}	
-	 	});
+		
+		if(fileName !== '')
+			fs.unlink(pathToFile + fileName, (err) => {
+				if (err) {
+						//return next(err);
+				}
+			});
+		switch (funShortName){
+			case 'eq':
+				equip.delDoc(request, response, next);
+				break;
+			case 'met':
+				metrology.delDoc(request, response, next);
+				break;
+			case 'rep':
+				repair.delDoc(request, response, next)
+				break;
+		}
 	 });
 	
 	//#endregion ДОКУМЕНТЫ И ФОТО
-	app.get('/u', function(request, response, next) {
 	
-		db.query('SELECT * FROM role;', [], function(err, result){
-			  
-			if (err){
-				return next(err)
-			}
-			response.json(result.rows)  
-		})
-	})
-	app.get('/ri', function(request, response, next) {
-	
-		db.query(`update role set rl_rights = 'FFFFFFF' WHERE id_role = 1`, [], function(err, result){
-			  
-			if (err){
-				return next(err)
-			}
-			response.json(result.rows)  
-		})
-	})
+
+
+
 }
 
 

@@ -44,11 +44,11 @@ const insEquipment = function(request, response, next){
   db.query(`INSERT INTO equipment (eqname, card_num, inv_num, eqpurpose, eqpassport, fact_num,
       fact_date, eqproducer, reg_num, condition, is_ready, mpi_mai, price_date, 
       eqprice, remark, hourprice, totime, minworktime, id_respose_man, id_dicdev_dicdevision, 
-      id_eqtype_diceqtype, eq_place, eq_comdate, eq_lastmod)
+      id_eqtype_diceqtype, eq_place, eq_comdate, eq_lastmod, eq_worktime)
     VALUES ($1::VARCHAR(255), $2::VARCHAR(50),  $3::VARCHAR(45), $4::TEXT, $5::TEXT, $6::VARCHAR(45),
       $7::DATE, $8::VARCHAR(255), $9::VARCHAR(45), $10::TEXT, $11::INT, $12::INT, $13::DATE, 
       $14::FLOAT, $15::TEXT, $16::FLOAT, $17::INT, $18::INT, $19::INT, $20::INT, 
-      $21::INT, $22::TEXT, $23::DATE, CURRENT_DATE
+      $21::INT, $22::TEXT, $23::DATE, CURRENT_DATE, $24::INT
     )
     RETURNING id_eq`, [equipmentData.eqName, equipmentData.cardNum, equipmentData.invNum,  equipmentData.eqPurpose,  equipmentData.eqPassport, equipmentData.factNum,
       equipmentData.factDate !=='' ? new Date(equipmentData.factDate) : null,  equipmentData.eqProducer,  equipmentData.regNum,  equipmentData.eqTechState, 
@@ -57,7 +57,8 @@ const insEquipment = function(request, response, next){
       equipmentData.eqNote,  toFloat(equipmentData.costLaborTime), equipmentData.TOInterval !== '' ? equipmentData.TOInterval : null,  
       equipmentData.orderTime !== '' ? equipmentData.orderTime : null,  equipmentData.responsible  !== '' ? equipmentData.responsible : null, 
       equipmentData.devision !== '' ? equipmentData.devision : null, equipmentData.eqType !== '' ? equipmentData.eqType : null,  
-      equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null], function(err, result){
+      equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null,
+      equipmentData.workingMode !== '' ? equipmentData.workingMode : null], function(err, result){
       if (err){
         return next(err)
     }
@@ -75,7 +76,7 @@ const insEquipment = function(request, response, next){
        fact_num =  $6::VARCHAR(45), fact_date = $7::DATE, eqproducer = $8::VARCHAR(255), reg_num =  $9::VARCHAR(45), condition = $10::TEXT,
        is_ready = $11::INT, mpi_mai = $12::INT, price_date = $13::DATE, eqprice = $14::FLOAT, remark = $15::TEXT, hourprice = $16::FLOAT, 
        totime = $17::INT, minworktime = $18::INT, id_respose_man = $19::INT, id_dicdev_dicdevision = $20::INT, 
-      id_eqtype_diceqtype =  $21::INT, eq_place = $22::TEXT, eq_comdate = $23::DATE, eq_lastmod = CURRENT_DATE
+      id_eqtype_diceqtype =  $21::INT, eq_place = $22::TEXT, eq_comdate = $23::DATE, eq_lastmod = CURRENT_DATE, eq_worktime = $25:: INT
       WHERE id_eq = $24:: INT`, [equipmentData.eqName, equipmentData.cardNum, equipmentData.invNum,  equipmentData.eqPurpose,  equipmentData.eqPassport, equipmentData.factNum,
       equipmentData.factDate !=='' ? new Date(equipmentData.factDate) : null,  equipmentData.eqProducer,  equipmentData.regNum,  equipmentData.eqTechState, 
       equipmentData.eqReadiness !=='' ? equipmentData.eqReadiness : null, equipmentData.eqCalInterval!=='' ? equipmentData.eqCalInterval : null, 
@@ -83,7 +84,8 @@ const insEquipment = function(request, response, next){
       equipmentData.eqNote,  toFloat(equipmentData.costLaborTime), equipmentData.TOInterval !== '' ? equipmentData.TOInterval : null,  
       equipmentData.orderTime !== '' ? equipmentData.orderTime : null,  equipmentData.responsible  !== '' ? equipmentData.responsible : null, 
       equipmentData.devision !== '' ? equipmentData.devision : null, equipmentData.eqType !== '' ? equipmentData.eqType : null,  
-      equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null, idEq !== '' ? idEq : 0], function(err, result){
+      equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null, idEq !== '' ? idEq : 0,
+      equipmentData.workingMode !== '' ? equipmentData.workingMode : null], function(err, result){
       if (err){
         return next(err)
     }
@@ -93,7 +95,7 @@ const insEquipment = function(request, response, next){
   
 
 const delEquipment = async function(request, response, next){
-  let idEq = request.params.idEq;
+  let idEq = request.params.idEprocq;
   let pathToDoc = process.cwd() + __staticFolder;
   var pathToImage = process.cwd() + __staticFolder;
   try{
@@ -186,17 +188,47 @@ const delEquipment = async function(request, response, next){
 const addDoc = function(request, response, next){
     let file = request.file;
     let idEq = request.query.idEq;
+    let idDoc = request.query.idDoc;
     let docTypeId = request.query.docTypeId;
     let docPath = __docFolder + '/' + file.filename;
-    db.query(`INSERT INTO Docs(doctype, docbodypath, id_eq_equipment)
-    VALUES ($1::INT, $2::VARCHAR(255), $3::int)
-    RETURNING id_doc`, [docTypeId, docPath,  idEq], function(err, result){
+
+    if (idDoc == '' || idDoc == -1){
+      db.query(`INSERT INTO Docs(doctype, docbodypath, id_eq_equipment)
+      VALUES ($1::INT, $2::VARCHAR(255), $3::INT)
+      RETURNING id_doc`, [docTypeId, docPath,  idEq], function(err, result){
+          if (err){
+            return next(err)
+          }
+
+          let idDoc = result.rows[0].id_doc;
+          response.send({filename: docPath, idDoc: idDoc});
+        });
+    }
+    else {
+      db.query(`UPDATE Docs
+        SET docbodypath = $1::VARCHAR(255)
+        WHERE id_doc = $2::int`, [docPath, idDoc], function(err, result){
+          if (err){
+            return next(err)
+          }
+          response.status(200).send({filename: docPath});
+        });
+    }
+  }
+  const insDoc = function(request, response, next){
+    let eqDocData = request.body.eqDocData;
+    
+    let idEq = eqDocData.idEq;
+    let docTypeId = eqDocData.docTypeId;
+    db.query(`INSERT INTO Docs(doctype, id_eq_equipment)
+    VALUES ($1::INT, $2::int)
+    RETURNING id_doc`, [docTypeId,  idEq], function(err, result){
         if (err){
           return next(err)
         }
 
         let idDoc = result.rows[0].id_doc;
-        response.send({filename: docPath, idDoc: idDoc});
+        response.send({idDoc: idDoc});
       });
   }
 
@@ -252,4 +284,4 @@ const equipmentWorkingMode =  function(request, response, next){
 }
     
 
-module.exports = {equipments, insEquipment, updEquipment, delEquipment, addDoc, delDoc, addImage, delImage, getDocList, getImageList, getLocList, equipmentWorkingMode }
+module.exports = {equipments, insEquipment, updEquipment, delEquipment, addDoc, delDoc, insDoc, addImage, delImage, getDocList, getImageList, getLocList, equipmentWorkingMode }

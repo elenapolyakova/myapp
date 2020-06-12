@@ -20,12 +20,13 @@ const repairs = function(request, response, next){
   }
   const insRepair = function(request, response, next){
       let repairData = request.body.repairData;
-      db.query(`INSERT INTO Repair (rep_date, rep_type, rep_maintenance, id_eq_equipment)
-        VALUES ($1::DATE, $2::INT, $3::VARCHAR(255), $4::INT)
+      db.query(`INSERT INTO Repair (rep_date, rep_type, rep_maintenance, id_eq_equipment, rep_masterfio)
+        VALUES ($1::DATE, $2::INT, $3::VARCHAR(255), $4::INT, $5::VARCHAR(255))
         RETURNING id_rep`, [ repairData.repDate !== '' ? new Date(repairData.repDate) : null, 
         repairData.repType !== '' ? repairData.repType : null,
         repairData.execWork,
-        repairData.idEq !== '' ? repairData.idEq : 0 ], function(err, result){
+        repairData.idEq !== '' ? repairData.idEq : 0 ,
+        repairData.repMasterFIO], function(err, result){
       if (err){
           return next(err)
       }
@@ -41,10 +42,12 @@ const repairs = function(request, response, next){
     db.query(`UPDATE Repair 
       SET rep_date = $1::DATE, 
       rep_type = $2::INT, 
-      rep_maintenance = $3::VARCHAR(255)
-      WHERE id_rep = $4:: INT`, [repairData.repDate !== '' ? new Date(repairData.repDate) : null, 
+      rep_maintenance = $3::VARCHAR(255),
+      rep_masterfio = $4::VARCHAR(255)
+      WHERE id_rep = $5:: INT`, [repairData.repDate !== '' ? new Date(repairData.repDate) : null, 
       repairData.repType !== '' ? repairData.repType : null,
       repairData.execWork,
+      repairData.repMasterFIO,
       idRep !== '' ? idRep : 0 ], function(err, result){
         if (err){
           return next(err)
