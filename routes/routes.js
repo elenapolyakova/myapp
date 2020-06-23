@@ -13,6 +13,7 @@ const contract = require('./contract')
 const user = require('./user')
 const dictionary = require('./dictionary')
 const report = require('./report')
+const consum = require('./consum')
 const config = require('../config')
 //const base64ToPNG = require('../js/base64-to-png')
 
@@ -119,11 +120,19 @@ const router = app => {
 
 
 	//#region ОТЧЁТЫ
-
-
+	app.get ('/rEquipmentCard/:idEq', report.eqCard);
+	app.get ('/rSummary', report.eqSummary);
 	
 	//#endregion ОТЧЁТЫ
 	
+	
+
+	//#region РЕГИСТРАТОРЫ
+	app.post ('/consum', consum.insConsum);
+	
+	//#endregion РЕГИСТРАТОРЫ
+	consum
+
 	
 	//#region ДОКУМЕНТЫ И ФОТО
 	app.post ('/image', uploadImage.single("file"), (request, response) => {
@@ -194,7 +203,41 @@ const router = app => {
 	
 	//#endregion ДОКУМЕНТЫ И ФОТО
 	
+	app.get('/eq', function(request, response, next) {
+	
+		db.query(`SELECT eq.Id_Eq, eq.eqname, eq.eqpurpose, 
+		eq.inv_num, 
+		eq.fact_num, 
+		eq.fact_date, 
+		eq.eq_comdate, 
 
+		eq.is_ready, 
+	
+		eq.totime, 
+		eq.eq_place, 
+		eq.id_respose_man,
+		eq.eqpassport 
+		FROM equipment eq
+		LEFT JOIN Docs passport
+    	ON eq.Id_Eq = passport.Id_Eq_Equipment and passport.id_doc = 1;`, [], function(err, result){
+			  
+			if (err){
+				return next(err)
+			}
+			response.json(result.rows)  
+		})
+	})
+
+	app.get('/d', function(request, response, next) {
+	
+		db.query(`SELECT * from docs;`, [], function(err, result){
+			  
+			if (err){
+				return next(err)
+			}
+			response.json(result.rows)  
+		})
+	})
 
 
 }

@@ -11,7 +11,7 @@ const getDict = async function(request, response, next){
     dict.eqTypeList = result.rows;
      
     result = await db.query(`SELECT id_user as id, TRIM(us_surname) as us_surname, TRIM(us_name) as us_name,
-      TRIM(us_patname) as us_patname, TRIM(us_position) as us_position FROM Users`, []);
+      TRIM(us_patname) as us_patname, TRIM(us_position) as us_position, id_dicdev_dicdevision, us_company FROM Users`, []);
     dict.userList = result.rows;
     
     response.status(200).send(dict);  
