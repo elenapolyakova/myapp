@@ -11,7 +11,8 @@ const toFloat = val => {
       db.query(`INSERT INTO Consum (DT, I_A, I_B, I_C, V_A, V_B, V_C, id_eq_equipment, id_reg_reg)
         VALUES ($1::TIMESTAMP, $2::FLOAT, $3::FLOAT, $4::FLOAT, $5::FLOAT, $6::FLOAT, $7::FLOAT, $8::INT, $9::INT)
         RETURNING id_cons`, [ 
-            consumData.dt !=='' ? new Date(consumData.dt) : null,
+            //consumData.dt !=='' ? new Date(consumData.dt) : null,
+            new Date(),
             toFloat(consumData.I_A),
             toFloat(consumData.I_B),
             toFloat(consumData.I_C),
