@@ -28,6 +28,7 @@ const eqCard = function(request, response, next){
     LEFT JOIN 
         (SELECT MAX(rep_date) as rep_date, Id_Eq_Equipment
         FROM repair 
+        WHERE rep_type = 3
         GROUP BY Id_Eq_Equipment) rep
     ON eq.Id_Eq = rep.Id_Eq_Equipment
     LEFT JOIN Docs passport
@@ -86,6 +87,51 @@ const eqSummary = function(request, response, next){
             
          })
       
+  }
+
+  const eqWork = function(request, response, next){
+    let date = request.params.date;
+
+    db.query(`SELECT dev.id_dicDev,
+    eq.id_eq, 
+    eq.eqname,
+    eq.inv_num, 
+    eq.is_ready, 
+    eq.id_respose_man
+    FROM DicDevision dev
+    INNER JOIN Equipment eq
+    ON eq.id_dicdev_dicdevision = dev.id_dicDev
+    ORDER BY id_dicDev, id_eq`, [], function(err, result){
+          if (err){
+            return next(err)
+          }
+                response.status(200).send(result.rows);
+            
+         })
+      
+  }
+
+  const contract = function(request, response, next){
+     let contrData = request.query;
+     db.query(`SELECT c.id_cont, trim(c.con_num) as con_num, c.con_date, trim(c.con_purpose) as con_purpose,
+     eq.id_eq, trim(eq.card_num) as card_num, eq.hourprice 
+     FROM contract c
+     INNER JOIN eqQuery q ON c.id_Cont = q.id_cont_contract 
+     INNER JOIN Equipment eq ON eq.Id_Eq = q.id_eq_equipment
+     WHERE (eq.id_dicdev_dicdevision = $1::INT OR $1::INT = -1)
+     AND (eq.id_eq = $2::INT OR $2::INT = -1)
+     --AND ()
+     ORDER BY id_cont, id_eq`, [contrData.idDev !== '' ? contrData.idDev : -1,
+     contrData.idEq !== '' ? contrData.idEq : -1,
+    //contrData.dateStart !=='' ? new Date(contrData.dateStart) : null
+    //contrData.dateEnd !=='' ? new Date(contrData.dateEnd) : null
+    ], function(err, result){
+           if (err){
+             return next(err)
+           }
+                 response.status(200).send(result.rows);
+             
+    })
   }
 // const mustache = require('mustache');
 // var Promise = require('es6-promise').Promise;
@@ -181,4 +227,4 @@ const eqSummary = function(request, response, next){
 //   wb.write('ExcelFile2.xlsx', response);
 //  }
  
-module.exports = {eqCard, eqSummary}
+module.exports = {eqCard, eqSummary, eqWork, contract}

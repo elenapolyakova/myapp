@@ -21,14 +21,15 @@ const metrologies = function(request, response, next){
 }
 const insMetrology = function(request, response, next){
     let metrologyData = request.body.metrologyData;
-    db.query(`INSERT INTO Metrology (recdate, attestatdate, eqenable, m_type, atttype, id_eq_equipment, atestatend)
-      VALUES (CURRENT_DATE, $1::DATE, $2::INT, $3::INT, $4::INT, $5::INT, $6::DATE)
+    db.query(`INSERT INTO Metrology (recdate, attestatdate, eqenable, m_type, atttype, id_eq_equipment, atestatend, atestatnum)
+      VALUES (CURRENT_DATE, $1::DATE, $2::INT, $3::INT, $4::INT, $5::INT, $6::DATE, $7::VARCHAR(45))
       RETURNING id_metr`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
       metrologyData.eqEnable ? 1 : 0, 
       metrologyData.M_Type.id && metrologyData.M_Type.id !== ''  ? metrologyData.M_Type.id : null, 
       metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null, 
       metrologyData.idEq ? metrologyData.idEq : null, 
-      metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null], function(err, result){
+      metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null,
+      metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null], function(err, result){
         if (err){
           return next(err)
       }
@@ -47,12 +48,14 @@ const updMetrology = function(request, response, next){
       eqenable = $2::INT, 
       m_type = $3::INT,
       atttype =  $4::INT,
-      atestatend = $5::DATE
-      WHERE id_metr = $6:: INT`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
+      atestatend = $5::DATE,
+      atestatnum =  $6::VARCHAR(45)
+      WHERE id_metr = $7:: INT`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
       metrologyData.eqEnable ? 1 : 0,
       metrologyData.M_Type.id && metrologyData.M_Type.id !== '' ? metrologyData.M_Type.id : null,
       metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null,
       metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null, 
+      metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null,
       idMet !== '' ? idMet : 0 ], function(err, result){
         if (err){
           return next(err)

@@ -2,7 +2,12 @@ const db = require('../db')
 
 
 const users = function(request, response, next){
-    db.query(`SELECT u.*
+    db.query(`SELECT u.*, 
+    array_to_string(ARRAY(
+      SELECT ru.id_role
+      FROM Role_Users ru 
+      WHERE u.id_user = ru.id_user
+    ), ',', '*') as roleList
     FROM Users u `, [], function(err, result){
       if (err){
         return next(err)
@@ -10,6 +15,15 @@ const users = function(request, response, next){
             response.status(200).send(result.rows);
         
      })
+}
+const roles = function(request, response, next){
+  db.query(`SELECT r.* FROM Role r `, [], function(err, result){
+    if (err){
+      return next(err)
+    }
+          response.status(200).send(result.rows);
+      
+   })
 }
 
 const insUser = function(request, response, next){
@@ -56,5 +70,5 @@ const delUser = function(request, response, next){
   })
 }
 
-module.exports = {users, insUser, updUser, delUser}
+module.exports = {users, insUser, updUser, delUser, roles}
 

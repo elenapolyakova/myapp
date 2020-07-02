@@ -69,13 +69,13 @@ const updQuery = function(request, response, next){
 
   db.query(`UPDATE eqQuery 
     SET q_date = CURRENT_DATE, date_start = $1::TIMESTAMP, date_end = $2::TIMESTAMP, q_type = $3::INT, 
-    id_eq_equipment = $4::INT, id_cont_contract = $5::INT, id_user_users = $6::INT
-    WHERE id_eqquery = $7:: INT`, [queryData.dateStart !== '' ? new Date(queryData.dateStart) : null, 
+    id_eq_equipment = $4::INT, id_cont_contract = $5::INT
+    WHERE id_eqquery = $6:: INT`, [queryData.dateStart !== '' ? new Date(queryData.dateStart) : null, 
     queryData.dateEnd !== '' ? new Date(queryData.dateEnd) : null, 
     queryData.Q_type !== '' ? queryData.Q_type : null, 
     queryData.eqId !== '' ? queryData.eqId : null, 
     queryData.conId !== '' ? queryData.conId : null, 
-    queryData.userId !== '' ? queryData.userId : null,
+    //queryData.userId !== '' ? queryData.userId : null,
     queryId !== '' ? queryId : 0], function(err, result){
     if (err){
       return next(err)

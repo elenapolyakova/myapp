@@ -15,7 +15,7 @@ const toFloat = val => {
 const equipments = function(request, response, next){
 
   db.query(`SELECT eq.*,
-  null as repDate, 0 as eqCostKeep, 0 as eqWorkLoad, att.AttDate as eqAtt, null as eqVer
+  rep.repDate as repDate, 0 as eqCostKeep, 0 as eqWorkLoad, att.AttDate as eqAtt, ver.AttEnd as eqVer
    FROM Equipment eq
    LEFT JOIN 
       (SELECT MAX(AttestatDate) as AttDate, Id_Eq_Equipment, attType
@@ -28,7 +28,13 @@ const equipments = function(request, response, next){
        FROM Metrology 
         GROUP BY Id_Eq_Equipment, attType
         HAVING attType = 2) ver
-    ON eq.Id_Eq = ver.Id_Eq_Equipment`, [], function(err, result){
+    ON eq.Id_Eq = ver.Id_Eq_Equipment
+    LEFT JOIN 
+      (SELECT MAX(rep_date) as repDate, Id_Eq_Equipment, rep_type
+      FROM repair 
+       GROUP BY Id_Eq_Equipment, rep_type
+       HAVING rep_type = 3) rep
+    ON eq.Id_Eq = rep.Id_Eq_Equipment`, [], function(err, result){
         if (err){
           return next(err)
         }
@@ -63,6 +69,9 @@ const insEquipment = function(request, response, next){
         return next(err)
     }
     let idEq = result.rows[0].id_eq;
+
+
+
 	  response.status(201).send({idEq: idEq})
   })
     
@@ -95,7 +104,7 @@ const insEquipment = function(request, response, next){
   
 
 const delEquipment = async function(request, response, next){
-  let idEq = request.params.idEprocq;
+  let idEq = request.params.idEq;
   let pathToDoc = process.cwd() + __staticFolder;
   var pathToImage = process.cwd() + __staticFolder;
   try{

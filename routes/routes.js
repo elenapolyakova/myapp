@@ -113,6 +113,7 @@ const router = app => {
 
 	//#region  АДМИНИСТРИРОВАНИЕ ПОЛЬЗОВАТЕЛЕЙ
 	app.get ('/user', user.users);
+	app.get ('/role', user.roles);
 	app.post ('/user', user.insUser);
 	app.put('/user/:idUser', user.updUser);
 	app.delete('/user/:idUser', user.delUser)
@@ -122,6 +123,8 @@ const router = app => {
 	//#region ОТЧЁТЫ
 	app.get ('/rEquipmentCard/:idEq', report.eqCard);
 	app.get ('/rSummary', report.eqSummary);
+	app.get ('/rEqWork/:date', report.eqWork);
+	app.get ('/rContract', report.contract);
 	
 	//#endregion ОТЧЁТЫ
 	
@@ -228,16 +231,17 @@ const router = app => {
 		})
 	})
 
-	app.get('/d', function(request, response, next) {
+	/*app.get('/r', async function(request, response, next) {
 	
-		db.query(`SELECT * from docs;`, [], function(err, result){
-			  
-			if (err){
-				return next(err)
-			}
+		let result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(2,'Руководитель', '22222200');`, []);
+		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(3,'Диспетчер', '2FFFFF10');`, []);
+		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(4,'Технический специалист', '2F222200');`, []);
+		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(5,'Метролог', '222F2200');`, []);
+		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(6,'Редактор оборудования', 'F2222200');`, []);
+		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(7,'Администратор', '0000000F');`, []);
 			response.json(result.rows)  
-		})
-	})
+
+	})*/
 
 
 }
