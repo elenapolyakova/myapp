@@ -134,8 +134,6 @@ const router = app => {
 	app.post ('/consum', consum.insConsum);
 	
 	//#endregion РЕГИСТРАТОРЫ
-	consum
-
 	
 	//#region ДОКУМЕНТЫ И ФОТО
 	app.post ('/image', uploadImage.single("file"), (request, response) => {
