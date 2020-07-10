@@ -14,7 +14,7 @@ config.email = {
   pass: '123456Qw',
   host: 'exchange.vniizht.ru',
   secure: true,
-  port: 443
+  port: 587//443
 }
 
 
