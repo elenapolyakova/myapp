@@ -10,12 +10,14 @@ config.__docFolder = '/doc';
 config.__pathToImage = config.__staticFolder + config.__imageFolder;
 config.__pathToDoc =  config.__staticFolder + config.__docFolder;
 config.email = {
-  user: 'retc@vniizht.ru',
+  user: 'vniizht\\retc',
   pass: '123456QW',
   host: 'exchange.vniizht.ru',
   secure: true,
   port: 443
 }
+
+
 
 
 module.exports = config

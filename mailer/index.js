@@ -36,6 +36,7 @@ const formatDateTime = value => {
 function sendMail(email, subject, message) {
     const mailTransport = nodemailer.createTransport({
         host: config.email.host,
+        debug: true,
         secure: config.email.secure,
         port: config.email.port,
         auth: { user: config.email.user, pass: config.email.pass },
@@ -49,15 +50,18 @@ function sendMail(email, subject, message) {
         }, function(err, info) {
             if (err) {
                 console.log(err);
-                return;
+                return -1;
             };
-            console.log('mail sent')
+            console.log('mail sent success');
+            console.log('info: ' + JSON.stringify(info));
+            return 1;
         });
     };
-function sendTest(request, response, next){
-    sendMail('voronkov.andrey@vniizht.ru', 'hola mundo', 'test message :)');
-    response.status(200).send('mail sent');
-}
+     function sendTest(request, response, next){
+   // let res = await sendMail('voronkov.andrey@vniizht.ru', 'hola mundo', 'test message :)');
+         sendMail('voronkov.andrey@vniizht.ru', 'hola mundo', 'test message :)');
+         response.status(200).send('ok');
+    }
 
 async function queryUpdated(queryData){
    
