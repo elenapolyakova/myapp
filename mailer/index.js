@@ -37,6 +37,7 @@ function sendMail(email, subject, message) {
     const mailTransport = nodemailer.createTransport({
         host: config.email.host,
         debug: true,
+        logger: true,
         secure: config.email.secure,
         port: config.email.port,
         auth: { user: config.email.user, pass: config.email.pass },
