@@ -1,6 +1,7 @@
 const db = require('../db')
 const fs = require('fs')
 const config = require('../config')
+const eventlog = require('./eventlog')
 
 const __staticFolder =  config.__staticFolder;
 const __imageFolder = config.__imageFolder;
@@ -45,42 +46,60 @@ const equipments = function(request, response, next){
 }
 
 
-const insEquipment = function(request, response, next){
+const insEquipment = async function(request, response, next){
   let equipmentData = request.body.equipmentData;
-  db.query(`INSERT INTO equipment (eqname, card_num, inv_num, eqpurpose, eqpassport, fact_num,
-      fact_date, eqproducer, reg_num, condition, is_ready, mpi_mai, price_date, 
-      eqprice, remark, hourprice, totime, minworktime, id_respose_man, id_dicdev_dicdevision, 
-      id_eqtype_diceqtype, eq_place, eq_comdate, eq_lastmod, eq_worktime)
-    VALUES ($1::VARCHAR(255), $2::VARCHAR(50),  $3::VARCHAR(45), $4::TEXT, $5::TEXT, $6::VARCHAR(45),
-      $7::DATE, $8::VARCHAR(255), $9::VARCHAR(45), $10::TEXT, $11::INT, $12::INT, $13::DATE, 
-      $14::FLOAT, $15::TEXT, $16::FLOAT, $17::INT, $18::INT, $19::INT, $20::INT, 
-      $21::INT, $22::TEXT, $23::DATE, CURRENT_DATE, $24::INT
-    )
-    RETURNING id_eq`, [equipmentData.eqName, equipmentData.cardNum, equipmentData.invNum,  equipmentData.eqPurpose,  equipmentData.eqPassport, equipmentData.factNum,
-      equipmentData.factDate !=='' ? new Date(equipmentData.factDate) : null,  equipmentData.eqProducer,  equipmentData.regNum,  equipmentData.eqTechState, 
-      equipmentData.eqReadiness !=='' ? equipmentData.eqReadiness : null, equipmentData.eqCalInterval!=='' ? equipmentData.eqCalInterval : null, 
-      equipmentData.resValueDate !== '' ? new Date(equipmentData.resValueDate) : null, toFloat(equipmentData.eqResValue), 
-      equipmentData.eqNote,  toFloat(equipmentData.costLaborTime), equipmentData.TOInterval !== '' ? equipmentData.TOInterval : null,  
-      equipmentData.orderTime !== '' ? equipmentData.orderTime : null,  equipmentData.responsible  !== '' ? equipmentData.responsible : null, 
-      equipmentData.devision !== '' ? equipmentData.devision : null, equipmentData.eqType !== '' ? equipmentData.eqType : null,  
-      equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null,
-      equipmentData.workingMode !== '' ? equipmentData.workingMode : null], function(err, result){
-      if (err){
-        return next(err)
-    }
-    let idEq = result.rows[0].id_eq;
+  let funId = equipmentData.funId !== '' ? equipmentData.funId : 0;
+  let userId = request.headers.userid;
 
+  try{
+      let result = await db.query(`INSERT INTO equipment (eqname, card_num, inv_num, eqpurpose, eqpassport, fact_num,
+          fact_date, eqproducer, reg_num, condition, is_ready, mpi_mai, price_date, 
+          eqprice, remark, hourprice, totime, minworktime, id_respose_man, id_dicdev_dicdevision, 
+          id_eqtype_diceqtype, eq_place, eq_comdate, eq_lastmod, eq_worktime)
+        VALUES ($1::VARCHAR(255), $2::VARCHAR(50),  $3::VARCHAR(45), $4::TEXT, $5::TEXT, $6::VARCHAR(45),
+          $7::DATE, $8::VARCHAR(255), $9::VARCHAR(45), $10::TEXT, $11::INT, $12::INT, $13::DATE, 
+          $14::FLOAT, $15::TEXT, $16::FLOAT, $17::INT, $18::INT, $19::INT, $20::INT, 
+          $21::INT, $22::TEXT, $23::DATE, CURRENT_DATE, $24::INT
+        )
+        RETURNING id_eq`, [equipmentData.eqName, equipmentData.cardNum, equipmentData.invNum,  equipmentData.eqPurpose,  equipmentData.eqPassport, equipmentData.factNum,
+          equipmentData.factDate !=='' ? new Date(equipmentData.factDate) : null,  equipmentData.eqProducer,  equipmentData.regNum,  equipmentData.eqTechState, 
+          equipmentData.eqReadiness !=='' ? equipmentData.eqReadiness : null, equipmentData.eqCalInterval!=='' ? equipmentData.eqCalInterval : null, 
+          equipmentData.resValueDate !== '' ? new Date(equipmentData.resValueDate) : null, toFloat(equipmentData.eqResValue), 
+          equipmentData.eqNote,  toFloat(equipmentData.costLaborTime), equipmentData.TOInterval !== '' ? equipmentData.TOInterval : null,  
+          equipmentData.orderTime !== '' ? equipmentData.orderTime : null,  equipmentData.responsible  !== '' ? equipmentData.responsible : null, 
+          equipmentData.devision !== '' ? equipmentData.devision : null, equipmentData.eqType !== '' ? equipmentData.eqType : null,  
+          equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null,
+          equipmentData.workingMode !== '' ? equipmentData.workingMode : null])
+         
+        let idEq = result.rows[0].id_eq;
+        response.status(201).send({idEq: idEq})
 
+        let newResult = await db.query(`SELECT * FROM equipment  WHERE id_eq = $1::INT`, [idEq]);
+        let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
 
-	  response.status(201).send({idEq: idEq})
-  })
+        let eventData = {
+          eventTypeId: eventlog.eventType.INSERT,
+          userId: userId,
+          funId: funId,
+          entityId: idEq,
+          newValue: JSON.stringify(newValue),
+          oldValue: JSON.stringify({})
+        }
+        eventlog.insEventLog(eventData)
+   
+  } catch (err) {return next(err)}
     
   }
-  const updEquipment = function(request, response, next){
+  const updEquipment = async function(request, response, next){
     let idEq = request.params.idEq;
     let equipmentData = request.body.equipmentData;
+    let funId = equipmentData.funId !== '' ? equipmentData.funId : 0;
+    let userId = request.headers.userid;
+    try {
 
-    db.query(`UPDATE equipment 
+      let oldResult = await  db.query(`SELECT * FROM equipment  WHERE id_eq = $1::INT`, [idEq !== '' ? idEq : 0]);
+
+      await db.query(`UPDATE equipment 
       SET eqname = $1::VARCHAR(255), card_num = $2::VARCHAR(50), inv_num = $3::VARCHAR(45), eqpurpose = $4::TEXT, eqpassport = $5::TEXT,
        fact_num =  $6::VARCHAR(45), fact_date = $7::DATE, eqproducer = $8::VARCHAR(255), reg_num =  $9::VARCHAR(45), condition = $10::TEXT,
        is_ready = $11::INT, mpi_mai = $12::INT, price_date = $13::DATE, eqprice = $14::FLOAT, remark = $15::TEXT, hourprice = $16::FLOAT, 
@@ -94,12 +113,24 @@ const insEquipment = function(request, response, next){
       equipmentData.orderTime !== '' ? equipmentData.orderTime : null,  equipmentData.responsible  !== '' ? equipmentData.responsible : null, 
       equipmentData.devision !== '' ? equipmentData.devision : null, equipmentData.eqType !== '' ? equipmentData.eqType : null,  
       equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null, idEq !== '' ? idEq : 0,
-      equipmentData.workingMode !== '' ? equipmentData.workingMode : null], function(err, result){
-      if (err){
-        return next(err)
-    }
-    response.status(200).send(`Обновлено оборудование: ${idEq}`);
-  })
+      equipmentData.workingMode !== '' ? equipmentData.workingMode : null]);
+
+      response.status(200).send(`Обновлено оборудование: ${idEq}`);
+
+      let newResult = await  db.query(`SELECT * FROM equipment  WHERE id_eq = $1::INT`, [idEq !== '' ? idEq : 0]);
+      let oldValue = oldResult.rows.length > 0 ? oldResult.rows[0] : {};
+      let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
+      let eventData = {
+        eventTypeId: eventlog.eventType.UPDATE,
+        userId: userId,
+        funId: funId,
+        entityId: idEq,
+        newValue: JSON.stringify(newValue),
+        oldValue: JSON.stringify(oldValue)
+      }
+      eventlog.insEventLog(eventData)
+  
+  }catch (err) {return next(err)}
 }
   
 
@@ -107,6 +138,8 @@ const delEquipment = async function(request, response, next){
   let idEq = request.params.idEq;
   let pathToDoc = process.cwd() + __staticFolder;
   var pathToImage = process.cwd() + __staticFolder;
+  let userId = request.headers.userid;
+  let funId = 0;
   try{
     //удаляем документы с сервера
     let docList = await db.query(`SELECT TRIM(docbodypath) AS docbodypath FROM Docs WHERE id_eq_equipment = $1::INT`, [idEq !== '' ? idEq : 0]);
@@ -122,11 +155,25 @@ const delEquipment = async function(request, response, next){
               if (err) {/*return next(err); */ }
             })
     });
+
+    let newResult = await  db.query(`SELECT * FROM equipment  WHERE id_eq = $1::INT`, [idEq !== '' ? idEq : 0]);
     //удаляем оборудование
     //todo проверить каскадное удаление
     await db.query(`DELETE FROM equipment WHERE id_eq = $1:: INT`, [idEq !== '' ? idEq : 0]);
 
     response.status(200).send(`Удалено оборудование: ${idEq}`);
+
+    let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
+    let eventData = {
+      eventTypeId: eventlog.eventType.DELETE,
+      userId: userId,
+      funId: funId,
+      entityId: idEq,
+      newValue: JSON.stringify(newValue),
+      oldValue: JSON.stringify({})
+    }
+    eventlog.insEventLog(eventData)
+
   } catch (err) {return next(err)}
 }
 
@@ -281,7 +328,7 @@ const delImage = function(request, response, next){
 const equipmentWorkingMode =  function(request, response, next){
   let idEq = request.params.idEq;
 
-   db.query(`SELECT 1 as workingMode FROM equipment WHERE id_eq = $1:: INT`, [idEq !== '' ? idEq : 0], function(err, result){
+   db.query(`SELECT eq_worktime as workingMode FROM equipment WHERE id_eq = $1:: INT`, [idEq !== '' ? idEq : 0], function(err, result){
        if (err){
          return next(err)
        }

@@ -1,6 +1,7 @@
 const db = require('../db')
 const config = require('../config')
 const fs = require('fs')
+const eventlog = require('./eventlog')
 
 const __staticFolder =  config.__staticFolder;
 const __docFolder =   config.__docFolder;
@@ -19,52 +20,87 @@ const metrologies = function(request, response, next){
             response.status(200).send(result.rows);
        })
 }
-const insMetrology = function(request, response, next){
+const insMetrology = async function(request, response, next){
     let metrologyData = request.body.metrologyData;
-    db.query(`INSERT INTO Metrology (recdate, attestatdate, eqenable, m_type, atttype, id_eq_equipment, atestatend, atestatnum)
-      VALUES (CURRENT_DATE, $1::DATE, $2::INT, $3::INT, $4::INT, $5::INT, $6::DATE, $7::VARCHAR(45))
-      RETURNING id_metr`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
-      metrologyData.eqEnable ? 1 : 0, 
-      metrologyData.M_Type.id && metrologyData.M_Type.id !== ''  ? metrologyData.M_Type.id : null, 
-      metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null, 
-      metrologyData.idEq ? metrologyData.idEq : null, 
-      metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null,
-      metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null], function(err, result){
-        if (err){
-          return next(err)
-      }
-      let idMet = result.rows[0].id_metr;
+    let userId = request.headers.userid;
+    let funId = metrologyData.funId !== '' ? metrologyData.funId : 3;
+    try {
+        let result = await db.query(`INSERT INTO Metrology (recdate, attestatdate, eqenable, m_type, atttype, id_eq_equipment, atestatend, atestatnum)
+        VALUES (CURRENT_DATE, $1::DATE, $2::INT, $3::INT, $4::INT, $5::INT, $6::DATE, $7::VARCHAR(45))
+        RETURNING id_metr`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
+        metrologyData.eqEnable ? 1 : 0, 
+        metrologyData.M_Type.id && metrologyData.M_Type.id !== ''  ? metrologyData.M_Type.id : null, 
+        metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null, 
+        metrologyData.idEq ? metrologyData.idEq : null, 
+        metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null,
+        metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null]);
+         
+        let idMet = result.rows[0].id_metr;
         response.status(201).send({idMet: idMet})
-    })
+
+        let newResult = await db.query(`SELECT * FROM Metrology  WHERE id_metr = $1::INT`, [idMet]);
+        let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
+  
+        let eventData = {
+          eventTypeId: eventlog.eventType.INSERT,
+          userId: userId,
+          funId: funId,
+          entityId: idMet,
+          newValue: JSON.stringify(newValue),
+          oldValue: JSON.stringify({})
+        }
+        eventlog.insEventLog(eventData)
+
+    } catch (err) {return next(err)}
 
 }
-const updMetrology = function(request, response, next){
+const updMetrology = async function(request, response, next){
     let idMet = request.params.idMet;
     let metrologyData = request.body.metrologyData;
+    let userId = request.headers.userid;
+    let funId = metrologyData.funId !== '' ? metrologyData.funId : 3;
+    try {
+        let oldResult = await  db.query(`SELECT * FROM Metrology  WHERE id_metr = $1::INT`, [idMet !== '' ? idMet : 0]);
 
-    db.query(`UPDATE Metrology 
-      SET recdate = CURRENT_DATE,
-      attestatdate = $1::DATE, 
-      eqenable = $2::INT, 
-      m_type = $3::INT,
-      atttype =  $4::INT,
-      atestatend = $5::DATE,
-      atestatnum =  $6::VARCHAR(45)
-      WHERE id_metr = $7:: INT`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
-      metrologyData.eqEnable ? 1 : 0,
-      metrologyData.M_Type.id && metrologyData.M_Type.id !== '' ? metrologyData.M_Type.id : null,
-      metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null,
-      metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null, 
-      metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null,
-      idMet !== '' ? idMet : 0 ], function(err, result){
-        if (err){
-          return next(err)
-      }
-      response.status(200).send(`Обновлена аттестация/поверка: ${idMet}`);
-    })
+        await db.query(`UPDATE Metrology 
+        SET recdate = CURRENT_DATE,
+        attestatdate = $1::DATE, 
+        eqenable = $2::INT, 
+        m_type = $3::INT,
+        atttype =  $4::INT,
+        atestatend = $5::DATE,
+        atestatnum =  $6::VARCHAR(45)
+        WHERE id_metr = $7:: INT`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
+        metrologyData.eqEnable ? 1 : 0,
+        metrologyData.M_Type.id && metrologyData.M_Type.id !== '' ? metrologyData.M_Type.id : null,
+        metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null,
+        metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null, 
+        metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null,
+        idMet !== '' ? idMet : 0 ]);
+
+
+        response.status(200).send(`Обновлена аттестация/поверка: ${idMet}`);
+
+        let newResult = await  db.query(`SELECT * FROM Metrology  WHERE id_metr = $1::INT`, [idMet !== '' ? idMet : 0]);
+        let oldValue = oldResult.rows.length > 0 ? oldResult.rows[0] : {};
+        let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
+        let eventData = {
+          eventTypeId: eventlog.eventType.UPDATE,
+          userId: userId,
+          funId: funId,
+          entityId: idMet,
+          newValue: JSON.stringify(newValue),
+          oldValue: JSON.stringify(oldValue)
+        }
+        eventlog.insEventLog(eventData)
+
+    } catch (err) {return next(err)}
 }
 const delMetrology = async function(request, response, next){
     let idMet = request.params.idMet;
+    let userId = request.headers.userid;
+    let funId = 3;
+
     try{
       //удаляем документы
      
@@ -84,10 +120,22 @@ const delMetrology = async function(request, response, next){
         }
     })
       //удаляем аттестацию/поверку
-
+      let newResult = await  db.query(`SELECT * FROM Metrology  WHERE id_metr = $1::INT`, [idMet !== '' ? idMet : 0]);
       await db.query(`DELETE FROM Metrology WHERE id_metr = $1:: INT`, [idMet !== '' ? idMet : 0]);
-  
+
       response.status(200).send(`Удалена аттестация/поверка: ${idMet}`);
+
+      let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
+      let eventData = {
+        eventTypeId: eventlog.eventType.DELETE,
+        userId: userId,
+        funId: funId,
+        entityId: idMet,
+        newValue: JSON.stringify(newValue),
+        oldValue: JSON.stringify({})
+      }
+      eventlog.insEventLog(eventData);
+  
     } catch (err) {return next(err)}
 }
 

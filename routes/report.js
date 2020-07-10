@@ -59,12 +59,12 @@ const eqSummary = function(request, response, next){
     total.count,
     xmlelement(name root, xmlagg(ts.ts_xml ORDER BY dev.id_dicDev DESC)) AS techState
     FROM DicDevision dev
-    LEFT JOIN 
+    INNER JOIN 
         (SELECT COUNT (Id_Eq) as count, id_dicdev_dicdevision
         FROM Equipment
         GROUP BY id_dicdev_dicdevision) total
     ON dev.id_dicDev = total.id_dicdev_dicdevision
-    LEFT JOIN 
+    INNER JOIN 
     (
         SELECT xmlelement(name techState_item,
                     xmlattributes(ts_item.count as count, ts_item.is_ready as is_ready)) AS ts_xml,

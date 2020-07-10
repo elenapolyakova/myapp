@@ -15,6 +15,8 @@ const dictionary = require('./dictionary')
 const report = require('./report')
 const consum = require('./consum')
 const config = require('../config')
+const eventlog = require('./eventlog')
+const mailer = require('../mailer')
 //const base64ToPNG = require('../js/base64-to-png')
 
 
@@ -128,11 +130,21 @@ const router = app => {
 	
 	//#endregion ОТЧЁТЫ
 	
-	
 
+	//#region ЛОГИРОВАНИЕ
+	app.get ('/queryHistory', eventlog.queryHistory);
+	//#endregion ЛОГИРОВАНИЕ
+		
 	//#region РЕГИСТРАТОРЫ
 	app.post ('/consum', consum.insConsum);
-	
+	//#endregion РЕГИСТРАТОРЫ
+
+
+	//#region РЕГИСТРАТОРЫ
+	app.get ('/mail', mailer.sendTest);
+	app.get ('/test', function(request, response, next) {
+		response.status(200).send('test');
+	});
 	//#endregion РЕГИСТРАТОРЫ
 	
 	//#region ДОКУМЕНТЫ И ФОТО
@@ -206,21 +218,7 @@ const router = app => {
 	
 	app.get('/eq', function(request, response, next) {
 	
-		db.query(`SELECT eq.Id_Eq, eq.eqname, eq.eqpurpose, 
-		eq.inv_num, 
-		eq.fact_num, 
-		eq.fact_date, 
-		eq.eq_comdate, 
-
-		eq.is_ready, 
-	
-		eq.totime, 
-		eq.eq_place, 
-		eq.id_respose_man,
-		eq.eqpassport 
-		FROM equipment eq
-		LEFT JOIN Docs passport
-    	ON eq.Id_Eq = passport.Id_Eq_Equipment and passport.id_doc = 1;`, [], function(err, result){
+		db.query(`SELECT eq.* FROM equipment eq;`, [], function(err, result){
 			  
 			if (err){
 				return next(err)
@@ -229,6 +227,39 @@ const router = app => {
 		})
 	})
 
+	app.get('/u', function(request, response, next) {
+	
+		db.query(`SELECT * from Users;`, [], function(err, result){
+			  
+			if (err){
+				return next(err)
+			}
+			response.json(result.rows)  
+		})
+	})
+
+	app.get('/event', function(request, response, next) {
+	
+		db.query(`SELECT * from EventLog;`, [], function(err, result){
+			  
+			if (err){
+				return next(err)
+			}
+			response.json(result.rows)  
+		})
+	})
+
+	
+	app.get('/de', function(request, response, next) {
+	
+		db.query(`delete from EventLog;`, [], function(err, result){
+			  
+			if (err){
+				return next(err)
+			}
+			response.json(result.rows)  
+		})
+	})
 	/*app.get('/r', async function(request, response, next) {
 	
 		let result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(2,'Руководитель', '22222200');`, []);

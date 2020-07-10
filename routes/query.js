@@ -1,4 +1,6 @@
 const db = require('../db')
+const eventlog = require('./eventlog')
+const mailer = require('../mailer')
 
 const queryList = function(request, response, next){
     db.query(`SELECT q.*,
@@ -45,9 +47,12 @@ const queriesDate = function(request, response, next){
             
           })
 }
-const insQuery = function(request, response, next){
+const insQuery = async function(request, response, next){
+    let userId = request.headers.userid;
     let queryData = request.body.queryData;
-    db.query(`INSERT INTO eqQuery (q_date, date_start, date_end, q_type, id_eq_equipment, id_cont_contract, id_user_users)
+    let funId = queryData.funId !== '' ? queryData.funId : 1;
+    try{
+      let result = await db.query(`INSERT INTO eqQuery (q_date, date_start, date_end, q_type, id_eq_equipment, id_cont_contract, id_user_users)
       VALUES (CURRENT_DATE, $1::TIMESTAMP, $2::TIMESTAMP, $3::INT, $4::INT, $5::INT, $6::INT)
       RETURNING id_eqquery`, [
         queryData.dateStart !== '' ? new Date(queryData.dateStart) : null, 
@@ -55,42 +60,91 @@ const insQuery = function(request, response, next){
         queryData.Q_type !== '' ? queryData.Q_type : null, 
         queryData.eqId !== '' ? queryData.eqId : null, 
         queryData.conId !== '' ? queryData.conId : null, 
-        queryData.userId !== '' ? queryData.userId : null], function(err, result){
-        if (err){
-          return next(err)
-      }
+        queryData.userId !== '' ? queryData.userId : null]);
+      
       let idQuery = result.rows[0].id_eqquery;
-        response.status(201).send({idQuery: idQuery})
-    })
+      response.status(201).send({idQuery: idQuery})
+
+      let newResult = await db.query(`SELECT * FROM eqQuery  WHERE id_eqquery = $1::INT`, [idQuery]);
+      let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
+
+      let eventData = {
+        eventTypeId: eventlog.eventType.INSERT,
+        userId: userId,
+        funId: funId,
+        entityId: idQuery,
+        newValue: JSON.stringify(newValue),
+        oldValue: JSON.stringify({})
+      }
+      eventlog.insEventLog(eventData)
+
+  } catch (err) {return next(err)}
+
 }
-const updQuery = function(request, response, next){
+const updQuery = async function(request, response, next){
+  
+  let userId = request.headers.userid;
   let queryId = request.params.idQuery;
   let queryData = request.body.queryData;
+  let funId = queryData.funId !== '' ? queryData.funId : 1;
 
-  db.query(`UPDATE eqQuery 
-    SET q_date = CURRENT_DATE, date_start = $1::TIMESTAMP, date_end = $2::TIMESTAMP, q_type = $3::INT, 
+  try{
+    let oldResult = await  db.query(`SELECT * FROM eqQuery  WHERE id_eqquery = $1::INT`, [queryId !== '' ? queryId : 0]);
+
+    await db.query(`UPDATE eqQuery 
+    SET date_start = $1::TIMESTAMP, date_end = $2::TIMESTAMP, q_type = $3::INT, 
     id_eq_equipment = $4::INT, id_cont_contract = $5::INT
-    WHERE id_eqquery = $6:: INT`, [queryData.dateStart !== '' ? new Date(queryData.dateStart) : null, 
+    WHERE id_eqquery = $6:: INT`, [
+      queryData.dateStart !== '' ? new Date(queryData.dateStart) : null, 
     queryData.dateEnd !== '' ? new Date(queryData.dateEnd) : null, 
     queryData.Q_type !== '' ? queryData.Q_type : null, 
     queryData.eqId !== '' ? queryData.eqId : null, 
     queryData.conId !== '' ? queryData.conId : null, 
     //queryData.userId !== '' ? queryData.userId : null,
-    queryId !== '' ? queryId : 0], function(err, result){
-    if (err){
-      return next(err)
-  }
-  response.status(200).send(`Обновлена заявка: ${queryId}`);
-})
+    queryId !== '' ? queryId : 0]);
+
+    response.status(200).send(`Обновлена заявка: ${queryId}`);
+
+    let newResult = await  db.query(`SELECT * FROM eqQuery  WHERE id_eqquery = $1::INT`, [queryId !== '' ? queryId : 0]);
+    let oldValue = oldResult.rows.length > 0 ? oldResult.rows[0] : {};
+    let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
+    let eventData = {
+      eventTypeId: eventlog.eventType.UPDATE,
+      userId: userId,
+      funId: funId,
+      entityId: queryId,
+      newValue: JSON.stringify(newValue),
+      oldValue: JSON.stringify(oldValue)
+    }
+    eventlog.insEventLog(eventData);
+    mailer.queryUpdated(eventData);
+
+  } catch (err) {return next(err)}
 }
-const delQuery = function(request, response, next){
+const delQuery = async function(request, response, next){
     let queryId = request.params.idQuery;
-    db.query(`DELETE FROM eqQuery WHERE id_eqquery = $1:: INT`, [queryId !== '' ? queryId : 0], function(err, result){
-          if (err){
-            return next(err)
+    let userId = request.headers.userid;
+    let funId = 1;
+
+    try {
+          let newResult = await  db.query(`SELECT * FROM eqQuery  WHERE id_eqquery = $1::INT`, [queryId !== '' ? queryId : 0]);
+          await db.query(`DELETE FROM eqQuery WHERE id_eqquery = $1:: INT`, [queryId !== '' ? queryId : 0]);
+         
+          response.status(200).send(`Удалена заявка: ${queryId}`);
+
+          let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
+          let eventData = {
+            eventTypeId: eventlog.eventType.DELETE,
+            userId: userId,
+            funId: funId,
+            entityId: queryId,
+            newValue: JSON.stringify(newValue),
+            oldValue: JSON.stringify({})
           }
-        response.status(200).send(`Удалена заявка: ${queryId}`);
-    })
+          eventlog.insEventLog(eventData);
+          mailer.queryDeleted(eventData);
+
+  } catch (err) {return next(err)}
 }
 
 module.exports = {queryList, queries, queriesDate, insQuery, updQuery, delQuery}
