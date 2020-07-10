@@ -43,7 +43,15 @@ function sendMail(email, subject, message) {
         auth: { user: config.email.user, pass: config.email.pass },
         tls: { rejectUnauthorized: false }
         });
-  mailTransport.sendMail({
+        mailTransport.verify(function(error, success){
+            if(error){
+                console.log("verify: " + error);
+            }
+            else {
+                console.log("Server is ready to take messages");
+            }
+        })    
+    mailTransport.sendMail({
         from: 'СУ Испытательным оборудованием',
         to: email,
         subject: subject,
