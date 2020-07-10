@@ -11,7 +11,7 @@ config.__pathToImage = config.__staticFolder + config.__imageFolder;
 config.__pathToDoc =  config.__staticFolder + config.__docFolder;
 config.email = {
   user: 'vniizht\\retc',
-  pass: '123456QW',
+  pass: '123456Qw',
   host: 'exchange.vniizht.ru',
   secure: true,
   port: 443
