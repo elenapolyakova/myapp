@@ -25,15 +25,18 @@ const insMetrology = async function(request, response, next){
     let userId = request.headers.userid;
     let funId = metrologyData.funId !== '' ? metrologyData.funId : 3;
     try {
-        let result = await db.query(`INSERT INTO Metrology (recdate, attestatdate, eqenable, m_type, atttype, id_eq_equipment, atestatend, atestatnum)
-        VALUES (CURRENT_DATE, $1::DATE, $2::INT, $3::INT, $4::INT, $5::INT, $6::DATE, $7::VARCHAR(45))
-        RETURNING id_metr`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
-        metrologyData.eqEnable ? 1 : 0, 
-        metrologyData.M_Type.id && metrologyData.M_Type.id !== ''  ? metrologyData.M_Type.id : null, 
-        metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null, 
-        metrologyData.idEq ? metrologyData.idEq : null, 
-        metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null,
-        metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null]);
+        let result = await db.query(`INSERT INTO Metrology (recdate, attestatdate, eqenable, m_type, atttype, id_eq_equipment, atestatend, atestatnum, protocol_date, protocol_num)
+        VALUES ($1::DATE, $2::DATE, $3::INT, $4::INT, $5::INT, $6::INT, $7::DATE, $8::VARCHAR(45), $9::DATE, $10::VARCHAR(45))
+        RETURNING id_metr`, [metrologyData.recDate !== '' ? new Date(metrologyData.recDate) : null, 
+            metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
+            metrologyData.eqEnable ? 1 : 0, 
+            metrologyData.M_Type.id && metrologyData.M_Type.id !== ''  ? metrologyData.M_Type.id : null, 
+            metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null, 
+            metrologyData.idEq ? metrologyData.idEq : null, 
+            metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null,
+            metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null,
+            metrologyData.protocolDate !== '' ? new Date(metrologyData.protocolDate) : null, 
+            metrologyData.protocolNum && metrologyData.protocolNum !== ''  ? metrologyData.protocolNum : null]);
          
         let idMet = result.rows[0].id_metr;
         response.status(201).send({idMet: idMet})
@@ -63,20 +66,26 @@ const updMetrology = async function(request, response, next){
         let oldResult = await  db.query(`SELECT * FROM Metrology  WHERE id_metr = $1::INT`, [idMet !== '' ? idMet : 0]);
 
         await db.query(`UPDATE Metrology 
-        SET recdate = CURRENT_DATE,
-        attestatdate = $1::DATE, 
-        eqenable = $2::INT, 
-        m_type = $3::INT,
-        atttype =  $4::INT,
-        atestatend = $5::DATE,
-        atestatnum =  $6::VARCHAR(45)
-        WHERE id_metr = $7:: INT`, [metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
-        metrologyData.eqEnable ? 1 : 0,
-        metrologyData.M_Type.id && metrologyData.M_Type.id !== '' ? metrologyData.M_Type.id : null,
-        metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null,
-        metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null, 
-        metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null,
-        idMet !== '' ? idMet : 0 ]);
+        SET recdate = $1::DATE,
+        attestatdate = $2::DATE, 
+        eqenable = $3::INT, 
+        m_type = $4::INT,
+        atttype =  $5::INT,
+        atestatend = $6::DATE,
+        atestatnum =  $7::VARCHAR(45),
+        protocol_date = $8::DATE, 
+        protocol_num =  $9::VARCHAR(45)
+        WHERE id_metr = $10:: INT`, [
+            metrologyData.recDate !== '' ? new Date(metrologyData.recDate) : null, 
+            metrologyData.attDate !== '' ? new Date(metrologyData.attDate) : null, 
+            metrologyData.eqEnable ? 1 : 0,
+            metrologyData.M_Type.id && metrologyData.M_Type.id !== '' ? metrologyData.M_Type.id : null,
+            metrologyData.attType.id && metrologyData.attType.id !== '' ? metrologyData.attType.id : null,
+            metrologyData.attEnd !== '' ? new Date(metrologyData.attEnd) : null, 
+            metrologyData.attNum && metrologyData.attNum !== ''  ? metrologyData.attNum : null,
+            metrologyData.protocolDate !== '' ? new Date(metrologyData.protocolDate) : null, 
+            metrologyData.protocolNum && metrologyData.protocolNum !== ''  ? metrologyData.protocolNum : null,
+            idMet !== '' ? idMet : 0 ]);
 
 
         response.status(200).send(`Обновлена аттестация/поверка: ${idMet}`);

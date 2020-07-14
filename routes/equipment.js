@@ -51,15 +51,18 @@ const insEquipment = async function(request, response, next){
   let funId = equipmentData.funId !== '' ? equipmentData.funId : 0;
   let userId = request.headers.userid;
 
+
   try{
       let result = await db.query(`INSERT INTO equipment (eqname, card_num, inv_num, eqpurpose, eqpassport, fact_num,
           fact_date, eqproducer, reg_num, condition, is_ready, mpi_mai, price_date, 
           eqprice, remark, hourprice, totime, minworktime, id_respose_man, id_dicdev_dicdevision, 
-          id_eqtype_diceqtype, eq_place, eq_comdate, eq_lastmod, eq_worktime)
+          id_eqtype_diceqtype, eq_place, eq_comdate, eq_lastmod, eq_worktime, eq_placeaddr, eqinpassport) 
+          --, eqinpassport)
         VALUES ($1::VARCHAR(255), $2::VARCHAR(50),  $3::VARCHAR(45), $4::TEXT, $5::TEXT, $6::VARCHAR(45),
           $7::DATE, $8::VARCHAR(255), $9::VARCHAR(45), $10::TEXT, $11::INT, $12::INT, $13::DATE, 
           $14::FLOAT, $15::TEXT, $16::FLOAT, $17::INT, $18::INT, $19::INT, $20::INT, 
-          $21::INT, $22::TEXT, $23::DATE, CURRENT_DATE, $24::INT
+          $21::INT, $22::TEXT, $23::DATE, CURRENT_DATE, $24::INT, $25::TEXT, $26::INT
+
         )
         RETURNING id_eq`, [equipmentData.eqName, equipmentData.cardNum, equipmentData.invNum,  equipmentData.eqPurpose,  equipmentData.eqPassport, equipmentData.factNum,
           equipmentData.factDate !=='' ? new Date(equipmentData.factDate) : null,  equipmentData.eqProducer,  equipmentData.regNum,  equipmentData.eqTechState, 
@@ -69,7 +72,10 @@ const insEquipment = async function(request, response, next){
           equipmentData.orderTime !== '' ? equipmentData.orderTime : null,  equipmentData.responsible  !== '' ? equipmentData.responsible : null, 
           equipmentData.devision !== '' ? equipmentData.devision : null, equipmentData.eqType !== '' ? equipmentData.eqType : null,  
           equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null,
-          equipmentData.workingMode !== '' ? equipmentData.workingMode : null])
+          equipmentData.workingMode !== '' ? equipmentData.workingMode : null,
+          equipmentData.placeAddr,
+          equipmentData.inPassport ? 1 : 0
+        ])
          
         let idEq = result.rows[0].id_eq;
         response.status(201).send({idEq: idEq})
@@ -95,6 +101,7 @@ const insEquipment = async function(request, response, next){
     let equipmentData = request.body.equipmentData;
     let funId = equipmentData.funId !== '' ? equipmentData.funId : 0;
     let userId = request.headers.userid;
+
     try {
 
       let oldResult = await  db.query(`SELECT * FROM equipment  WHERE id_eq = $1::INT`, [idEq !== '' ? idEq : 0]);
@@ -104,7 +111,8 @@ const insEquipment = async function(request, response, next){
        fact_num =  $6::VARCHAR(45), fact_date = $7::DATE, eqproducer = $8::VARCHAR(255), reg_num =  $9::VARCHAR(45), condition = $10::TEXT,
        is_ready = $11::INT, mpi_mai = $12::INT, price_date = $13::DATE, eqprice = $14::FLOAT, remark = $15::TEXT, hourprice = $16::FLOAT, 
        totime = $17::INT, minworktime = $18::INT, id_respose_man = $19::INT, id_dicdev_dicdevision = $20::INT, 
-      id_eqtype_diceqtype =  $21::INT, eq_place = $22::TEXT, eq_comdate = $23::DATE, eq_lastmod = CURRENT_DATE, eq_worktime = $25:: INT
+      id_eqtype_diceqtype =  $21::INT, eq_place = $22::TEXT, eq_comdate = $23::DATE, eq_lastmod = CURRENT_DATE, eq_worktime = $25:: INT,
+      eq_placeaddr = $26::TEXT, eqinpassport = $27::INT
       WHERE id_eq = $24:: INT`, [equipmentData.eqName, equipmentData.cardNum, equipmentData.invNum,  equipmentData.eqPurpose,  equipmentData.eqPassport, equipmentData.factNum,
       equipmentData.factDate !=='' ? new Date(equipmentData.factDate) : null,  equipmentData.eqProducer,  equipmentData.regNum,  equipmentData.eqTechState, 
       equipmentData.eqReadiness !=='' ? equipmentData.eqReadiness : null, equipmentData.eqCalInterval!=='' ? equipmentData.eqCalInterval : null, 
@@ -113,7 +121,8 @@ const insEquipment = async function(request, response, next){
       equipmentData.orderTime !== '' ? equipmentData.orderTime : null,  equipmentData.responsible  !== '' ? equipmentData.responsible : null, 
       equipmentData.devision !== '' ? equipmentData.devision : null, equipmentData.eqType !== '' ? equipmentData.eqType : null,  
       equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null, idEq !== '' ? idEq : 0,
-      equipmentData.workingMode !== '' ? equipmentData.workingMode : null]);
+      equipmentData.workingMode !== '' ? equipmentData.workingMode : null,
+      equipmentData.placeAddr, equipmentData.inPassport ? 1 : 0]);
 
       response.status(200).send(`Обновлено оборудование: ${idEq}`);
 

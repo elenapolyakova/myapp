@@ -28,9 +28,10 @@ const __pathToDoc =   config.__pathToDoc;
 
 
 const storageDocConfig = multer.diskStorage({
-     destination: (req, file, cb) =>{
-         cb(null, '.' + __pathToDoc);
-     },
+  //   destination: (req, file, cb) =>{
+  //       cb(null, process.cwd() + __pathToDoc);
+ //    },
+	 destination: '.' + __pathToDoc,
      filename: (req, file, cb) =>{
 		let extension = path.extname(file.originalname);
 		cb(null, file.fieldname + '-' + Date.now() +extension)
