@@ -216,63 +216,6 @@ const router = app => {
 	 });
 	
 	//#endregion ДОКУМЕНТЫ И ФОТО
-	
-	app.get('/eq', function(request, response, next) {
-	
-		db.query(`SELECT eq.* FROM equipment eq;`, [], function(err, result){
-			  
-			if (err){
-				return next(err)
-			}
-			response.json(result.rows)  
-		})
-	})
-
-	app.get('/u', function(request, response, next) {
-	
-		db.query(`SELECT * from Users;`, [], function(err, result){
-			  
-			if (err){
-				return next(err)
-			}
-			response.json(result.rows)  
-		})
-	})
-
-	app.get('/event', function(request, response, next) {
-	
-		db.query(`SELECT * from EventLog;`, [], function(err, result){
-			  
-			if (err){
-				return next(err)
-			}
-			response.json(result.rows)  
-		})
-	})
-
-	
-	app.get('/de', function(request, response, next) {
-	
-		db.query(`delete from EventLog;`, [], function(err, result){
-			  
-			if (err){
-				return next(err)
-			}
-			response.json(result.rows)  
-		})
-	})
-	/*app.get('/r', async function(request, response, next) {
-	
-		let result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(2,'Руководитель', '22222200');`, []);
-		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(3,'Диспетчер', '2FFFFF10');`, []);
-		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(4,'Технический специалист', '2F222200');`, []);
-		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(5,'Метролог', '222F2200');`, []);
-		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(6,'Редактор оборудования', 'F2222200');`, []);
-		result = await db.query(`INSERT INTO Role (id_role, rl_name, rl_rights) OVERRIDING SYSTEM VALUE VALUES(7,'Администратор', '0000000F');`, []);
-			response.json(result.rows)  
-
-	})*/
-
 
 }
 
