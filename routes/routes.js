@@ -217,6 +217,17 @@ const router = app => {
 	
 	//#endregion ДОКУМЕНТЫ И ФОТО
 
+	app.get('/u', function(request, response, next) {
+	
+		db.query(`SELECT * from Users;`, [], function(err, result){
+			  
+			if (err){
+				return next(err)
+			}
+			response.json(result.rows)  
+		})
+	})
+
 }
 
 

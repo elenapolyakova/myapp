@@ -53,7 +53,7 @@ const insUser = async function(request, response, next){
           userData.roleList
         ]);
 
-        response.status(201).send({idUser: idUser})
+        response.status(201).send({idUser: idUser, pswd: pswd})
       } catch (err) {return next(err)}
 
 }
@@ -89,7 +89,7 @@ const updUser = async function(request, response, next){
          userData.roleList
        ]);
 
-       response.status(200).send(`Обновлён пользователь: ${idUser}`);
+       response.status(200).send({pswd: pswd});
      } catch (err) {return next(err)}
     
 }
