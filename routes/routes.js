@@ -78,6 +78,7 @@ const router = app => {
 	app.get('/equipment/imgList/:idEq', equip.getImageList);
 	app.get('/equipment/locList/:idEq', equip.getLocList);
 	app.get('/equipment/workingMode/:idEq', equip.equipmentWorkingMode)
+	app.get('/equipment/actualDate/:idEq', equip.equipmentActualDate);
 	app.post('/equipmentDoc', equip.insDoc)
 	
 	//#endregion КАРТОЧКА ОБОРУДОВАНИЯ

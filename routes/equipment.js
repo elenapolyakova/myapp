@@ -15,7 +15,7 @@ const toFloat = val => {
 
 const equipments = function(request, response, next){
 
-  db.query(`SELECT eq.*,
+  db.query(`SELECT eq.*, 
   rep.repDate as repDate, 0 as eqCostKeep, 0 as eqWorkLoad, att.AttDate as eqAtt, ver.AttEnd as eqVer
    FROM Equipment eq
    LEFT JOIN 
@@ -347,6 +347,39 @@ const equipmentWorkingMode =  function(request, response, next){
      });
 
 }
-    
+const equipmentActualDate =  function(request, response, next){
+  let idEq = request.params.idEq;
 
-module.exports = {equipments, insEquipment, updEquipment, delEquipment, addDoc, delDoc, insDoc, addImage, delImage, getDocList, getImageList, getLocList, equipmentWorkingMode }
+   db.query(`SELECT id_eq, att.AttDate as eqAtt, ver.AttEnd as eqVer, rep.repDate as repDate
+   FROM equipment eq
+   LEFT JOIN 
+      (SELECT MAX(AttestatDate) as AttDate, Id_Eq_Equipment, attType
+      FROM Metrology 
+      GROUP BY Id_Eq_Equipment, attType
+      HAVING attType = 1) att
+    ON eq.Id_Eq = att.Id_Eq_Equipment
+    LEFT JOIN 
+      (SELECT MAX(AtestatEnd) as AttEnd, Id_Eq_Equipment, attType
+        FROM Metrology 
+        GROUP BY Id_Eq_Equipment, attType
+        HAVING attType = 2) ver 
+    ON eq.Id_Eq = ver.Id_Eq_Equipment
+    LEFT JOIN 
+        (SELECT MAX(rep_date) as repDate, Id_Eq_Equipment, rep_type
+        FROM repair 
+         GROUP BY Id_Eq_Equipment, rep_type
+         HAVING rep_type = 3) rep
+    ON eq.Id_Eq = rep.Id_Eq_Equipment
+    WHERE eq.id_eq = $1:: INT`, [idEq !== '' ? idEq : 0], function(err, result){
+       if (err){
+         return next(err)
+       }
+       
+       response.status(200).send(result.rows[0])
+     });
+
+}
+
+    
+module.exports = {equipments, insEquipment, updEquipment, delEquipment, addDoc, delDoc, insDoc, 
+  addImage, delImage, getDocList, getImageList, getLocList, equipmentWorkingMode, equipmentActualDate}
