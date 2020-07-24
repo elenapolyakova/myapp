@@ -189,7 +189,7 @@ const delEquipment = async function(request, response, next){
 
   const getDocList =  function(request, response, next){
     let idEq = request.params.idEq;
-    db.query(`SELECT id_doc, doctype, TRIM(docbodypath) AS docbodypath
+    db.query(`SELECT id_doc, doctype, TRIM(docbodypath) AS docbodypath, DocNum, DocDate
       FROM Docs 
       WHERE id_eq_equipment = $1::INT`, [idEq !== '' ? idEq : 0], function(err, result){
         if (err){
@@ -200,7 +200,9 @@ const delEquipment = async function(request, response, next){
         let docItem = {
           idDoc: item.id_doc,
           path:  item.docbodypath,
-          docTypeId: item.doctype
+          docTypeId: item.doctype,
+          docNum: item.docnum ? item.docnum.trim() : '',
+          docDate: item.docdate ? item.docdate: ''
         }
         docList.push(docItem);
       })
@@ -258,9 +260,11 @@ const addDoc = function(request, response, next){
     let docPath = __docFolder + '/' + file.filename;
 
     if (idDoc == '' || idDoc == -1){
-      db.query(`INSERT INTO Docs(doctype, docbodypath, id_eq_equipment)
-      VALUES ($1::INT, $2::VARCHAR(255), $3::INT)
-      RETURNING id_doc`, [docTypeId, docPath,  idEq], function(err, result){
+      db.query(`INSERT INTO Docs(doctype, docbodypath, id_eq_equipment, DocNum, DocDate)
+      VALUES ($1::INT, $2::VARCHAR(255), $3::INT, $4::VARCHAR(45), $5::DATE)
+      RETURNING id_doc`, [docTypeId, docPath,  idEq,
+        request.query.docNum, request.query.docDate !== '' ? new Date (request.query.docDate) : null
+      ], function(err, result){
           if (err){
             return next(err)
           }
@@ -285,9 +289,11 @@ const addDoc = function(request, response, next){
     
     let idEq = eqDocData.idEq;
     let docTypeId = eqDocData.docTypeId;
-    db.query(`INSERT INTO Docs(doctype, id_eq_equipment)
-    VALUES ($1::INT, $2::int)
-    RETURNING id_doc`, [docTypeId,  idEq], function(err, result){
+    db.query(`INSERT INTO Docs(doctype, id_eq_equipment, DocNum, DocDate)
+    VALUES ($1::INT, $2::int, $3::VARCHAR(45), $4::DATE)
+    RETURNING id_doc`, [docTypeId,  idEq,
+      eqDocData.docNum, eqDocData.docDate !== '' ? new Date (eqDocData.docDate) : null
+    ], function(err, result){
         if (err){
           return next(err)
         }

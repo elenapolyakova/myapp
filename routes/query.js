@@ -104,7 +104,8 @@ const updQuery = async function(request, response, next){
     queryId !== '' ? queryId : 0]);
 
     response.status(200).send(`Обновлена заявка: ${queryId}`);
-
+  } catch (err) {return next(err)}
+  try{
     let newResult = await  db.query(`SELECT * FROM eqQuery  WHERE id_eqquery = $1::INT`, [queryId !== '' ? queryId : 0]);
     let oldValue = oldResult.rows.length > 0 ? oldResult.rows[0] : {};
     let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
@@ -118,8 +119,10 @@ const updQuery = async function(request, response, next){
     }
     eventlog.insEventLog(eventData);
     mailer.queryUpdated(eventData);
+  }
+  catch (err) {}
 
-  } catch (err) {return next(err)}
+ 
 }
 const delQuery = async function(request, response, next){
     let queryId = request.params.idQuery;
@@ -131,7 +134,8 @@ const delQuery = async function(request, response, next){
           await db.query(`DELETE FROM eqQuery WHERE id_eqquery = $1:: INT`, [queryId !== '' ? queryId : 0]);
          
           response.status(200).send(`Удалена заявка: ${queryId}`);
-
+    } catch (err) {return next(err)}
+    try{
           let newValue = newResult.rows.length > 0 ? newResult.rows[0] : {};
           let eventData = {
             eventTypeId: eventlog.eventType.DELETE,
@@ -143,8 +147,9 @@ const delQuery = async function(request, response, next){
           }
           eventlog.insEventLog(eventData);
           mailer.queryDeleted(eventData);
-
-  } catch (err) {return next(err)}
+        }
+     catch (err) {}       
+  
 }
 
 module.exports = {queryList, queries, queriesDate, insQuery, updQuery, delQuery}
