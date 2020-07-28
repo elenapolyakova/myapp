@@ -33,6 +33,14 @@ app.use(logErrors);
 app.use(clientErrorHandler);
 app.use(errorHandler);
 
+app.use("/*", sendIndex) //;//response.redirect("/")
+
+
+
+  function sendIndex(req, res, next) {
+	res.sendFile('index.html', { root: __dirname + "/public/"});
+  }
+
  //start server
  const server = app.listen (port, (error) => {
 	if (error) return console.log ('Error:  ${error}');
