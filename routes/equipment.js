@@ -35,7 +35,8 @@ const equipments = function(request, response, next){
       FROM repair 
        GROUP BY Id_Eq_Equipment, rep_type
        HAVING rep_type = 3) rep
-    ON eq.Id_Eq = rep.Id_Eq_Equipment`, [], function(err, result){
+    ON eq.Id_Eq = rep.Id_Eq_Equipment
+    ORDER BY eq.card_num`, [], function(err, result){
         if (err){
           return next(err)
         }

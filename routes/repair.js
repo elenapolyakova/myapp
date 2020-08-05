@@ -27,7 +27,7 @@ const repairs = function(request, response, next){
         let result = await db.query(`INSERT INTO Repair (rep_date, rep_type, rep_maintenance, id_eq_equipment, rep_masterfio)
         VALUES ($1::DATE, $2::INT, $3::VARCHAR(255), $4::INT, $5::VARCHAR(255))
         RETURNING id_rep`, [ repairData.repDate !== '' ? new Date(repairData.repDate) : null, 
-        repairData.repType !== '' ? repairData.repType : null,
+        repairData.repType.id && repairData.repType.id !== ''  ? repairData.repType.id : null, 
         repairData.execWork,
         repairData.idEq !== '' ? repairData.idEq : 0 ,
         repairData.repMasterFIO]);
@@ -66,7 +66,7 @@ const repairs = function(request, response, next){
         rep_maintenance = $3::VARCHAR(255),
         rep_masterfio = $4::VARCHAR(255)
         WHERE id_rep = $5:: INT`, [repairData.repDate !== '' ? new Date(repairData.repDate) : null, 
-        repairData.repType !== '' ? repairData.repType : null,
+        repairData.repType.id && repairData.repType.id !== ''  ? repairData.repType.id : null, 
         repairData.execWork,
         repairData.repMasterFIO,
         idRep !== '' ? idRep : 0 ]);
