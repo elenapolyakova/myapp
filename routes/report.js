@@ -136,7 +136,6 @@ const eqSummary = function(request, response, next){
 
   
   const planFact = function(request, response, next){
-    console.log(request.params);
     let idEq = request.params.idEq;
     let month = 8;
     let year = 2020;
