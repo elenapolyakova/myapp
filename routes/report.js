@@ -133,6 +133,39 @@ const eqSummary = function(request, response, next){
              
     })
   }
+
+  
+  const planFact = function(request, response, next){
+    let idEq = request.params.idEq;
+    let month = 9;
+    let year = 2020;
+    var data = {};
+   // var date_begin = new Date(year,month-1, 1, 0,0,0);
+    var daysInMonth = 33 - new Date(year,month - 1, 33).getDate();
+    for (var i=1; i<= daysInMonth; i++){
+      var date_begin = new Date (year,month - 1, i, 0, 0, 0);
+      var date_end = new Date (year,month - 1, i, 23,59,59);
+        db.query(`
+        select count(*) as minute_count from 
+          (select date_trunc('minute',dt) as m, AVG(i_a) as m_i,AVG(i_b),AVG(i_c),AVG(v_a) 
+            from consum con 
+            inner join equipment eq
+            on con.id_eq_equipment = eq.id_eq
+            where con.id_eq_equipment =$1::INT and i_a > 500 
+            and dt>$2::TIMESTAMP and dt<$3::TIMESTAMP GROUP by m) as countRow ;
+      var date_begin = new Date (year,month - 1, i, 0, 0, 0);
+        `, [idEq !== '' ? idEq : -1, date_begin,date_end 
+      ], function(err, result){
+              if (err){
+                return next(err)
+              }
+              data.push({date: date_begin, minutes: result.rows[0].minute_count});
+          
+            
+   })
+  }
+         response.status(200).send(data);
+ }
 // const mustache = require('mustache');
 // var Promise = require('es6-promise').Promise;
 
@@ -227,4 +260,4 @@ const eqSummary = function(request, response, next){
 //   wb.write('ExcelFile2.xlsx', response);
 //  }
  
-module.exports = {eqCard, eqSummary, eqWork, contract}
+module.exports = {eqCard, eqSummary, eqWork, contract, planFact}
