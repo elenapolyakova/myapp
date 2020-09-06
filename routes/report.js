@@ -145,8 +145,10 @@ const eqSummary = function(request, response, next){
           
         SELECT date_part('hour',max(dt)-min(dt))*60 +date_part('minute',max(dt)-min(dt)) as minute_count,
         max(dt)-min(dt) as dif, date_trunc('day', dt) as days
-         FROM consum 
-          where id_eq_equipment =  $1::INT and i_a > 500 
+         FROM consum con
+         INNER JOIN reg reg
+         ON con.id_reg_reg = reg.id_reg
+          where reg.id_eq_equipment = $1::INT and i_a > 500 
               and  date_part('month', dt) = $2::INT and date_part('year', dt) = $3::INT
          group by date_trunc('day', dt);
         `, [idEq !== '' ? idEq : -1, month, year
