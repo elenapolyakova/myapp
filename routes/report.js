@@ -1,9 +1,9 @@
 const db = require('../db')
 
-const eqCard = function(request, response, next){
-    let idEq = request.params.idEq;
+const eqCard = function (request, response, next) {
+  let idEq = request.params.idEq;
 
-    db.query(`SELECT eq.id_eq, eq.id_dicdev_dicdevision,
+  db.query(`SELECT eq.id_eq, eq.id_dicdev_dicdevision,
     eq.card_num,
     eq.eqname,
     eq.eqpurpose, 
@@ -42,19 +42,19 @@ const eqCard = function(request, response, next){
          FROM Metrology 
          GROUP BY Id_Eq_Equipment) met
       ON eq.Id_Eq = met.Id_Eq_Equipment
-      WHERE eq.Id_Eq = $1:: INT`, [ idEq !== '' ? idEq : 0], function(err, result){
-          if (err){
-            return next(err)
-          }
-                response.status(200).send(result.rows);
-            
-         })
-      
-  }
-  
-const eqSummary = function(request, response, next){
+      WHERE eq.Id_Eq = $1:: INT`, [idEq !== '' ? idEq : 0], function (err, result) {
+    if (err) {
+      return next(err)
+    }
+    response.status(200).send(result.rows);
 
-    db.query(`SELECT dev.id_dicDev as id, 
+  })
+
+}
+
+const eqSummary = function (request, response, next) {
+
+  db.query(`SELECT dev.id_dicDev as id, 
     TRIM(dev.DevName) as devision_name,
     total.count,
     xmlelement(name root, xmlagg(ts.ts_xml ORDER BY dev.id_dicDev DESC)) AS techState
@@ -79,20 +79,20 @@ const eqSummary = function(request, response, next){
 
     )ts
     ON dev.id_dicDev = ts.id_dicdev_dicdevision
-    GROUP BY dev.id_dicDev,  devision_name, total.count`, [], function(err, result){
-          if (err){
-            return next(err)
-          }
-                response.status(200).send(result.rows);
-            
-         })
-      
-  }
+    GROUP BY dev.id_dicDev,  devision_name, total.count`, [], function (err, result) {
+    if (err) {
+      return next(err)
+    }
+    response.status(200).send(result.rows);
 
-  const eqWork = function(request, response, next){
-    let date = request.params.date;
+  })
 
-    db.query(`SELECT dev.id_dicDev,
+}
+
+const eqWork = function (request, response, next) {
+  let date = request.params.date;
+
+  db.query(`SELECT dev.id_dicDev,
     eq.id_eq, 
     eq.eqname,
     eq.inv_num, 
@@ -101,19 +101,19 @@ const eqSummary = function(request, response, next){
     FROM DicDevision dev
     INNER JOIN Equipment eq
     ON eq.id_dicdev_dicdevision = dev.id_dicDev
-    ORDER BY id_dicDev, id_eq`, [], function(err, result){
-          if (err){
-            return next(err)
-          }
-                response.status(200).send(result.rows);
-            
-         })
-      
-  }
+    ORDER BY id_dicDev, id_eq`, [], function (err, result) {
+    if (err) {
+      return next(err)
+    }
+    response.status(200).send(result.rows);
 
-  const contract = function(request, response, next){
-     let contrData = request.query;
-     db.query(`SELECT c.id_cont, trim(c.con_num) as con_num, c.con_date, trim(c.con_purpose) as con_purpose,
+  })
+
+}
+
+const contract = function (request, response, next) {
+  let contrData = request.query;
+  db.query(`SELECT c.id_cont, trim(c.con_num) as con_num, c.con_date, trim(c.con_purpose) as con_purpose,
      eq.id_eq, trim(eq.card_num) as card_num, eq.hourprice 
      FROM contract c
      INNER JOIN eqQuery q ON c.id_Cont = q.id_cont_contract 
@@ -122,25 +122,27 @@ const eqSummary = function(request, response, next){
      AND (eq.id_eq = $2::INT OR $2::INT = -1)
      --AND ()
      ORDER BY id_cont, id_eq`, [contrData.idDev !== '' ? contrData.idDev : -1,
-     contrData.idEq !== '' ? contrData.idEq : -1,
+  contrData.idEq !== '' ? contrData.idEq : -1,
     //contrData.dateStart !=='' ? new Date(contrData.dateStart) : null
     //contrData.dateEnd !=='' ? new Date(contrData.dateEnd) : null
-    ], function(err, result){
-           if (err){
-             return next(err)
-           }
-                 response.status(200).send(result.rows);
-             
-    })
-  }
+  ], function (err, result) {
+    if (err) {
+      return next(err)
+    }
+    response.status(200).send(result.rows);
 
-  
-  const planFact = function(request, response, next){
-    let idEq = request.params.idEq;
-    let month = 8;
-    let year = 2020;
-    
-        db.query(`
+  })
+}
+
+
+const planFact = function (request, response, next) {
+  let queryData = request.query;
+
+  let idEq = queryData.idEq;
+  let month = queryData.month;
+  let year = queryData.year;
+
+  db.query(`
           
         SELECT date_part('hour',max(dt)-min(dt))*60 +date_part('minute',max(dt)-min(dt)) as minute_count,
         max(dt)-min(dt) as dif, date_trunc('day', dt) as days
@@ -151,17 +153,48 @@ const eqSummary = function(request, response, next){
               and  date_part('month', dt) = $2::INT and date_part('year', dt) = $3::INT
          group by date_trunc('day', dt);
         `, [idEq !== '' ? idEq : -1, month, year
-      ], function(err, result){
-              if (err){
-                return next(err)
-              }
-              response.status(200).send(result.rows);
-          
-            
-   })
-  
-         
- }
+  ], function (err, result) {
+    if (err) {
+      return next(err)
+    }
+    response.status(200).send(result.rows);
+
+
+  })
+
+
+}
+
+const workingEquip = function (request, response, next) {
+
+
+  db.query(`SELECT dev.id_dicdev,
+  eq.id_eq, 
+  eq.eqname,
+  eq.card_num,
+  eq.eq_place,
+  eq.inv_num, 
+  eq.is_ready, 
+  eq.id_respose_man
+  FROM DicDevision dev 
+  INNER JOIN Equipment eq ON eq.id_dicdev_dicdevision = dev.id_dicdev
+  INNER JOIN reg reg ON eq.id_eq = reg.id_eq_equipment 
+  INNER JOIN (
+	  SELECT distinct id_reg_reg
+	  from consum
+	  where i_a > 500
+	  group by id_reg_reg
+  	  HAVING max(dt) > clock_timestamp() - interval '10 minute'	 
+  ) con ON con.id_reg_reg = reg.id_reg
+  ORDER BY id_dicDev, id_eq;`, [], function (err, result) {
+    if (err) {
+      return next(err)
+    }
+    response.status(200).send(result.rows);
+
+  })
+
+}
 // const mustache = require('mustache');
 // var Promise = require('es6-promise').Promise;
 
@@ -179,10 +212,10 @@ const eqSummary = function(request, response, next){
 //       };
 //   //     const tmpl = fs.readFileSync(require.resolve('../template/test.html'), 'utf8')
 //   //     const html = tmpl.replace('{{image}}','http://localhost:3001/src/logo.png');
-  
+
 //   //     //var report = mustache.render(tmpl, view);
 
-    
+
 
 //   //  // pdf.create(report, options).toFile('./report/test-' + Date.now() + '.pdf', function(err, res) {
 
@@ -199,7 +232,7 @@ const eqSummary = function(request, response, next){
 //         //   res.setHeader('Content-type', 'application/pdf')
 //         //   stream.pipe(res)
 //         // })
-    
+
 //  }
 //  const testExcel =  function(request, response, next){
 //   var xl = require('excel4node');
@@ -215,27 +248,27 @@ const eqSummary = function(request, response, next){
 // //   },
 // //   numberFormat: '#,##0.00; (#,##0.00); -',
 // // });
- 
+
 // // // Set value of cell A1 to 100 as a number type styled with paramaters of style
 // // ws.cell(1, 1)
 // //   .number(100)
 // //   .style(style);
- 
+
 // // // Set value of cell B1 to 200 as a number type styled with paramaters of style
 // // ws.cell(1, 2)
 // //   .number(200)
 // //   .style(style);
- 
+
 // // // Set value of cell C1 to a formula styled with paramaters of style
 // // ws.cell(1, 3)
 // //   .formula('A1 + B1')
 // //   .style(style);
- 
+
 // // // Set value of cell A2 to 'string' styled with paramaters of style
 // // ws.cell(2, 1)
 // //   .string('string')
 // //   .style(style);
- 
+
 // // // Set value of cell A3 to true as a boolean type styled with paramaters of style but with an adjustment to the font size.
 // // ws.cell(3, 1)
 // //   .bool(true)
@@ -255,5 +288,5 @@ const eqSummary = function(request, response, next){
 
 //   wb.write('ExcelFile2.xlsx', response);
 //  }
- 
-module.exports = {eqCard, eqSummary, eqWork, contract, planFact}
+
+module.exports = { eqCard, eqSummary, eqWork, contract, planFact, workingEquip }

@@ -129,7 +129,8 @@ const router = app => {
 	app.get ('/rSummary', report.eqSummary);
 	app.get ('/rEqWork/:date', report.eqWork);
 	app.get ('/rContract', report.contract);
-	app.get ('/rPlanFact/:idEq', report.planFact);
+	app.get ('/rPlanFact', report.planFact);
+	app.get('/rWorkingEq', report.workingEquip);
 	
 	//#endregion ОТЧЁТЫ
 	
