@@ -183,11 +183,14 @@ const workingEquip = function (request, response, next) {
   INNER JOIN (
 	  SELECT distinct id_reg_reg
 	  from consum
+	  INNER JOIN reg reg
+	  ON id_reg_reg = reg.id_reg
 	  where i_a > reg.trig
 	  group by id_reg_reg
   	  HAVING max(dt) > clock_timestamp() - interval '10 minute'	 
   ) con ON con.id_reg_reg = reg.id_reg
-  ORDER BY id_dicDev, id_eq;`, [], function (err, result) {
+  ORDER BY id_dicDev, id_eq;
+					 `, [], function (err, result) {
     if (err) {
       return next(err)
     }
