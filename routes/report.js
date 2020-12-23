@@ -142,16 +142,17 @@ const planFact = function (request, response, next) {
   let month = queryData.month;
   let year = queryData.year;
 
-  db.query(`
-          
-        SELECT date_part('hour',max(dt)-min(dt))*60 +date_part('minute',max(dt)-min(dt)) as minute_count,
-        max(dt)-min(dt) as dif, date_trunc('day', dt) as days
-         FROM consum con
-         INNER JOIN reg reg
-         ON con.id_reg_reg = reg.id_reg
-          where reg.id_eq_equipment = $1::INT and i_a > 500 
-              and  date_part('month', dt) = $2::INT and date_part('year', dt) = $3::INT
-         group by date_trunc('day', dt);
+  db.query(`SELECT COUNT(*) AS minute_count, date_trunc('day',day_count.m) AS days
+      FROM 
+        (SELECT date_trunc('minute',dt) AS m
+        FROM consum con
+        INNER JOIN reg reg
+        ON con.id_reg_reg = reg.id_reg
+        WHERE reg.id_eq_equipment = $1::INT
+        AND i_a > reg.trig
+        AND date_part('month', dt) = $2::INT AND date_part('year', dt) = $3::INT 
+        GROUP BY m) AS day_count 
+      GROUP BY days;
         `, [idEq !== '' ? idEq : -1, month, year
   ], function (err, result) {
     if (err) {
@@ -182,7 +183,7 @@ const workingEquip = function (request, response, next) {
   INNER JOIN (
 	  SELECT distinct id_reg_reg
 	  from consum
-	  where i_a > 500
+	  where i_a > reg.trig
 	  group by id_reg_reg
   	  HAVING max(dt) > clock_timestamp() - interval '10 minute'	 
   ) con ON con.id_reg_reg = reg.id_reg
