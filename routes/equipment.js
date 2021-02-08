@@ -57,12 +57,12 @@ const insEquipment = async function(request, response, next){
       let result = await db.query(`INSERT INTO equipment (eqname, card_num, inv_num, eqpurpose, eqpassport, fact_num,
           fact_date, eqproducer, reg_num, condition, is_ready, mpi_mai, price_date, 
           eqprice, remark, hourprice, totime, minworktime, id_respose_man, id_dicdev_dicdevision, 
-          id_eqtype_diceqtype, eq_place, eq_comdate, eq_lastmod, eq_worktime, eq_placeaddr, eqinpassport) 
+          id_eqtype_diceqtype, eq_place, eq_comdate, eq_lastmod, eq_worktime, eq_placeaddr, eqinpassport, eq_placetype) 
           --, eqinpassport)
         VALUES ($1::VARCHAR(255), $2::VARCHAR(50),  $3::VARCHAR(45), $4::TEXT, $5::TEXT, $6::VARCHAR(45),
           $7::DATE, $8::VARCHAR(255), $9::VARCHAR(45), $10::TEXT, $11::INT, $12::INT, $13::DATE, 
           $14::FLOAT, $15::TEXT, $16::FLOAT, $17::INT, $18::INT, $19::INT, $20::INT, 
-          $21::INT, $22::TEXT, $23::DATE, CURRENT_DATE, $24::INT, $25::TEXT, $26::INT
+          $21::INT, $22::TEXT, $23::DATE, CURRENT_DATE, $24::INT, $25::TEXT, $26::INT, $27::INT
 
         )
         RETURNING id_eq`, [equipmentData.eqName, equipmentData.cardNum, equipmentData.invNum,  equipmentData.eqPurpose,  equipmentData.eqPassport, equipmentData.factNum,
@@ -75,7 +75,8 @@ const insEquipment = async function(request, response, next){
           equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null,
           equipmentData.workingMode !== '' ? equipmentData.workingMode : null,
           equipmentData.placeAddr,
-          equipmentData.inPassport ? 1 : 0
+          equipmentData.inPassport ? 1 : 0,
+          equipmentData.placeType !== '' ? equipmentData.placeType : null,  
         ])
          
         let idEq = result.rows[0].id_eq;
@@ -92,7 +93,7 @@ const insEquipment = async function(request, response, next){
           newValue: JSON.stringify(newValue),
           oldValue: JSON.stringify({})
         }
-        eventlog.insEventLog(eventData)
+        eventlog.insEventLog(eventData);
    
   } catch (err) {return next(err)}
     
