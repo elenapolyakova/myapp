@@ -114,7 +114,7 @@ const insEquipment = async function(request, response, next){
        is_ready = $11::INT, mpi_mai = $12::INT, price_date = $13::DATE, eqprice = $14::FLOAT, remark = $15::TEXT, hourprice = $16::FLOAT, 
        totime = $17::INT, minworktime = $18::INT, id_respose_man = $19::INT, id_dicdev_dicdevision = $20::INT, 
       id_eqtype_diceqtype =  $21::INT, eq_place = $22::TEXT, eq_comdate = $23::DATE, eq_lastmod = CURRENT_DATE, eq_worktime = $25:: INT,
-      eq_placeaddr = $26::TEXT, eqinpassport = $27::INT
+      eq_placeaddr = $26::TEXT, eqinpassport = $27::INT, eq_placetype = $28::INT
       WHERE id_eq = $24:: INT`, [equipmentData.eqName, equipmentData.cardNum, equipmentData.invNum,  equipmentData.eqPurpose,  equipmentData.eqPassport, equipmentData.factNum,
       equipmentData.factDate !=='' ? new Date(equipmentData.factDate) : null,  equipmentData.eqProducer,  equipmentData.regNum,  equipmentData.eqTechState, 
       equipmentData.eqReadiness !=='' ? equipmentData.eqReadiness : null, equipmentData.eqCalInterval!=='' ? equipmentData.eqCalInterval : null, 
@@ -124,7 +124,8 @@ const insEquipment = async function(request, response, next){
       equipmentData.devision !== '' ? equipmentData.devision : null, equipmentData.eqType !== '' ? equipmentData.eqType : null,  
       equipmentData.eqLocation,  equipmentData.comDate !== '' ? new Date (equipmentData.comDate) : null, idEq !== '' ? idEq : 0,
       equipmentData.workingMode !== '' ? equipmentData.workingMode : null,
-      equipmentData.placeAddr, equipmentData.inPassport ? 1 : 0]);
+      equipmentData.placeAddr, equipmentData.inPassport ? 1 : 0,
+      equipmentData.placeType !== '' ? equipmentData.placeType : null,  ]);
 
       response.status(200).send(`Обновлено оборудование: ${idEq}`);
 
