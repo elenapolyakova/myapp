@@ -1,0 +1,13 @@
+[Unit]
+Description=ASU Stend main server
+Documentation=https://retc.vniizht.lan:3000
+After=network.target
+
+[Service]
+Environment=NODE_PORT=3000
+Type=simple
+ExecStart=/usr/bin/node /home/avoronkov/myapp/index.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
