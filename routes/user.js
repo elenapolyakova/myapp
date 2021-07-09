@@ -106,6 +106,6 @@ const delUser = async function(request, response, next){
 
   } catch (err) {return next(err)}
 }
-
+ 
 module.exports = {users, insUser, updUser, delUser, roles}
 
