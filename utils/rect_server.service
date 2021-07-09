@@ -6,7 +6,7 @@ After=network.target
 [Service]
 Environment=NODE_PORT=3000
 Type=simple
-ExecStart=/usr/bin/node /home/avoronkov/myapp/index.js
+ExecStart=/usr/bin/node /home/test_user/myapp/index.js
 Restart=on-failure
 
 [Install]
